@@ -11,7 +11,7 @@
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; padding-bottom: 100px; overflow-x: hidden; width: 100%; }
         .zazul-green { background-color: #15711b; }
         .zazul-text-green { color: #15711b; }
-        .btn-zazul { background-color: #15711b; color: white; border-radius: 1rem; font-weight: 700; text-transform: uppercase; transition: transform 0.1s; }
+        .btn-zazul { background-color: #15711b; color: white; border-radius: 1rem; font-weight: 700; text-transform: uppercase; transition: all 0.2s; }
         .btn-zazul:active { transform: scale(0.98); }
         .aba-content { display: none; width: 100%; animation: fadeIn 0.3s ease; }
         .aba-content.active { display: block; }
@@ -20,19 +20,21 @@
         .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding: 12px 0 25px 0; z-index: 50; }
         .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; flex: 1; }
         .nav-item.active { color: #15711b; }
+        .loading-pulse { animation: pulse 1.8s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div id="tela-login" class="fixed inset-0 z-[100] bg-white flex flex-col p-6 items-center justify-center" style="display: flex;">
+    <div id="tela-login" class="fixed inset-0 z-[100] bg-white flex flex-col p-6 items-center justify-center">
         <div class="w-full max-w-md space-y-6 text-center">
             <div class="zazul-green w-20 h-20 rounded-3xl mx-auto flex items-center justify-center shadow-lg">
                 <span class="text-white text-4xl font-black">E</span>
             </div>
             <h2 class="text-2xl font-black zazul-text-green uppercase">Entrar no Sistema</h2>
             <div class="space-y-3">
-                <input type="email" id="login-email" placeholder="E-mail" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-green-600">
-                <input type="password" id="login-senha" placeholder="Senha" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-green-600">
+                <input type="email" id="login-email" placeholder="E-mail" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
+                <input type="password" id="login-senha" placeholder="Senha" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
                 <button onclick="window.fazerLogin()" class="w-full btn-zazul py-4 text-lg">Acessar Conta</button>
             </div>
         </div>
@@ -53,51 +55,57 @@
             </div>
 
             <div id="form-estacionar" class="space-y-4">
-                <div class="card-app bg-gray-50 border-dashed border-2 text-center">
+                <div class="card-app bg-gray-50 border-dashed border-2 text-center" onclick="window.mudarAba('aba-veiculos')">
                     <p class="text-[10px] font-bold text-gray-400 uppercase">Veículo Selecionado</p>
                     <h3 class="text-3xl font-black text-black tracking-tighter" id="placa-view">SELECIONE</h3>
                 </div>
 
-                <div id="localizacao-box" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center">
-                    <span id="txt-local">📍 AGUARDANDO GPS...</span>
+                <div id="gps-container" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center transition-colors duration-500">
+                    <span id="txt-local" class="loading-pulse">📍 OBTENDO LOCALIZAÇÃO...</span>
                 </div>
 
-                <button id="btn-estacionar-main" onclick="window.ativarVaga()" class="w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none">Selecione um Veículo</button>
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="zona-select" class="w-full p-4 border rounded-2xl font-bold text-sm bg-white border-gray-200 outline-none">
+                        <option value="">Aguardando Rua...</option>
+                    </select>
+                    <select id="tempo-select" class="w-full p-4 border rounded-2xl font-bold text-sm bg-white border-gray-200 outline-none">
+                        <option value="1">1 Hora</option>
+                        <option value="2">2 Horas</option>
+                    </select>
+                </div>
+                <button id="btn-estacionar-main" onclick="window.ativarVaga()" class="w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none">Aguardando GPS...</button>
+            </div>
+
+            <div id="vaga-ativa-box" class="hidden space-y-4">
+                <div class="card-app border-2 border-green-600 text-center bg-green-50/30">
+                    <p class="text-green-600 font-black text-xs uppercase">Vaga Ativa</p>
+                    <h3 id="placa-ativa-label" class="text-4xl font-black my-3">---</h3>
+                    <div class="grid grid-cols-2 gap-4 mt-4 border-t pt-4">
+                        <div><p class="text-[10px] text-gray-400 font-bold uppercase">Custo Atual</p><span id="valor-correndo" class="font-black text-xl">R$ 0,00</span></div>
+                        <div><p class="text-[10px] text-gray-400 font-bold uppercase">Restante</p><span id="cronometro" class="font-black text-xl text-blue-600">00:00</span></div>
+                    </div>
+                </div>
+                <button onclick="window.sairDaVaga()" class="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase">Encerrar Vaga</button>
             </div>
         </section>
 
         <section id="aba-veiculos" class="aba-content space-y-4">
             <h3 class="zazul-text-green font-black uppercase text-sm px-1">Novo Veículo</h3>
             <div class="card-app space-y-4">
-                <input type="hidden" id="edit-id">
                 <input type="text" id="input-placa" placeholder="PLACA (Ex: ABC1D23)" class="w-full p-4 border-2 border-gray-100 rounded-2xl font-black uppercase text-center text-2xl outline-none focus:border-green-600">
                 <input type="text" id="input-modelo" placeholder="MODELO (Ex: ONIX)" class="w-full p-4 border border-gray-200 rounded-2xl text-sm font-semibold">
-                <button id="btn-salvar-veiculo" onclick="window.salvarNovoVeiculo()" class="w-full btn-zazul py-4">Salvar Veículo</button>
+                <button onclick="window.salvarNovoVeiculo()" class="w-full btn-zazul py-4">Salvar Veículo</button>
             </div>
-
             <h3 class="zazul-text-green font-black uppercase text-sm px-1 mt-6">Meus Carros</h3>
-            <div id="lista-veiculos" class="space-y-3">
-                <p class="text-center text-gray-400 text-xs py-4">Nenhum veículo cadastrado.</p>
-            </div>
-        </section>
-
-        <section id="aba-historico" class="aba-content space-y-4">
-            <h3 class="zazul-text-green font-black uppercase text-sm">Recibos de Uso</h3>
-            <div id="lista-historico" class="space-y-3"></div>
+            <div id="lista-veiculos" class="space-y-3"></div>
         </section>
 
     </main>
 
     <nav class="nav-bottom">
-        <button onclick="mudarAba('aba-veiculos', this)" class="nav-item">
-            <span>🚗</span> CARROS
-        </button>
-        <button id="btn-nav-estacionar" onclick="mudarAba('aba-estacionar', this)" class="nav-item active">
-            <span>🏠</span> INÍCIO
-        </button>
-        <button onclick="mudarAba('aba-historico', this)" class="nav-item">
-            <span>📄</span> RECIBOS
-        </button>
+        <button onclick="window.mudarAba('aba-veiculos', this)" class="nav-item">🚗 Carros</button>
+        <button id="btn-nav-estacionar" onclick="window.mudarAba('aba-estacionar', this)" class="nav-item active">🏠 Início</button>
+        <button class="nav-item">📄 Recibos</button>
     </nav>
 
     <script type="module">
@@ -118,6 +126,9 @@
         const db = getDatabase(app);
 
         let currentUser = null;
+        let saldoLocal = 0;
+        let zonasAdmin = [];
+        let timerCron = null;
 
         // --- LOGIN ---
         window.fazerLogin = () => {
@@ -125,37 +136,74 @@
             const s = document.getElementById('login-senha').value;
             signInWithEmailAndPassword(auth, e, s).catch(err => alert("Erro: " + err.message));
         };
-
-        window.fazerLogout = () => { signOut(auth).then(() => location.reload()); };
+        window.fazerLogout = () => signOut(auth).then(() => location.reload());
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
                 document.getElementById('tela-login').style.display = 'none';
-                carregarDadosUsuario(user.uid);
+                carregarZonasAdmin();
+                monitorarUsuario(user.uid);
                 carregarVeiculos(user.uid);
             } else {
                 document.getElementById('tela-login').style.display = 'flex';
             }
         });
 
-        // --- FUNÇÕES DE VEÍCULOS (CONSERTADO) ---
-        window.salvarNovoVeiculo = async () => {
-            const placa = document.getElementById('input-placa').value.toUpperCase().trim();
-            const modelo = document.getElementById('input-modelo').value.trim();
-            
-            if (placa.length < 7) return alert("Placa inválida!");
-            if (!modelo) return alert("Digite o modelo do carro!");
+        // --- GPS E REGRAS DE RUA ---
+        function carregarZonasAdmin() {
+            onValue(ref(db, 'configuracoes_zonas'), (snap) => {
+                zonasAdmin = snap.val() ? Object.values(snap.val()) : [];
+                iniciarGps();
+            });
+        }
 
-            try {
-                await push(ref(db, `usuarios/${currentUser.uid}/veiculos`), {
-                    placa: placa,
-                    modelo: modelo
-                });
-                document.getElementById('input-placa').value = "";
-                document.getElementById('input-modelo').value = "";
-                alert("Veículo salvo!");
-            } catch (e) { alert("Erro ao salvar."); }
+        function iniciarGps() {
+            if (!navigator.geolocation) return;
+            navigator.geolocation.watchPosition(async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                    const data = await res.json();
+                    const ruaGps = (data.address.road || "").toLowerCase();
+                    processarRua(ruaGps);
+                } catch(e) { console.error("Erro mapa:", e); }
+            }, null, { enableHighAccuracy: true });
+        }
+
+        function processarRua(ruaGps) {
+            const box = document.getElementById('gps-container');
+            const txt = document.getElementById('txt-local');
+            const sel = document.getElementById('zona-select');
+            const btn = document.getElementById('btn-estacionar-main');
+            const placa = document.getElementById('placa-view').innerText;
+
+            const zona = zonasAdmin.find(z => ruaGps.includes(z.rua.toLowerCase().trim()));
+
+            if (zona) {
+                box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-green-100 text-green-700 text-center border-green-200";
+                txt.innerText = `📍 ${ruaGps.toUpperCase()}`;
+                sel.innerHTML = `<option value="${zona.preco}">${zona.setor} (R$ ${zona.preco.toFixed(2)})</option>`;
+                if(placa !== "SELECIONE") {
+                    btn.className = "w-full btn-zazul py-5 text-lg";
+                    btn.innerText = "ESTACIONAR AGORA";
+                }
+            } else {
+                box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center border-gray-200";
+                txt.innerText = `📍 FORA DE ÁREA (${ruaGps.toUpperCase()})`;
+                sel.innerHTML = `<option value="">Indisponível</option>`;
+                btn.className = "w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none";
+                btn.innerText = "FORA DE ÁREA";
+            }
+        }
+
+        // --- VEÍCULOS ---
+        window.salvarNovoVeiculo = async () => {
+            const p = document.getElementById('input-placa').value.toUpperCase().trim();
+            const m = document.getElementById('input-modelo').value.trim();
+            if (p.length < 7 || !m) return alert("Preencha placa e modelo!");
+            await push(ref(db, `usuarios/${currentUser.uid}/veiculos`), { placa: p, modelo: m });
+            document.getElementById('input-placa').value = ""; document.getElementById('input-modelo').value = "";
         };
 
         function carregarVeiculos(uid) {
@@ -163,46 +211,75 @@
                 const lista = document.getElementById('lista-veiculos');
                 lista.innerHTML = "";
                 const dados = snap.val();
-                
-                if (!dados) {
-                    lista.innerHTML = '<p class="text-center text-gray-400 text-xs py-4">Nenhum veículo cadastrado.</p>';
-                    return;
-                }
-
+                if (!dados) return lista.innerHTML = '<p class="text-center text-gray-400 text-xs">Sem carros.</p>';
                 Object.entries(dados).forEach(([id, v]) => {
                     lista.innerHTML += `
-                        <div class="card-app flex justify-between items-center">
-                            <div>
-                                <p class="font-black text-xl">${v.placa}</p>
-                                <p class="text-[10px] text-gray-400 font-bold uppercase">${v.modelo}</p>
-                            </div>
+                        <div class="card-app flex justify-between items-center mb-2">
+                            <div><p class="font-black text-xl">${v.placa}</p><p class="text-[10px] text-gray-400 font-bold uppercase">${v.modelo}</p></div>
                             <div class="flex gap-2">
                                 <button onclick="window.selecionarPlaca('${v.placa}')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold">USAR</button>
-                                <button onclick="window.excluirVeiculo('${id}')" class="text-red-500 border border-red-100 px-3 py-2 rounded-xl text-[10px] font-bold">X</button>
+                                <button onclick="window.excluirVeiculo('${id}')" class="text-red-500 px-2 font-bold">X</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
             });
         }
+        window.excluirVeiculo = (id) => { if(confirm("Apagar?")) remove(ref(db, `usuarios/${currentUser.uid}/veiculos/${id}`)); };
+        window.selecionarPlaca = (p) => { document.getElementById('placa-view').innerText = p; window.mudarAba('aba-estacionar'); };
 
-        window.excluirVeiculo = (id) => {
-            if(confirm("Excluir este veículo?")) remove(ref(db, `usuarios/${currentUser.uid}/veiculos/${id}`));
-        };
-
-        window.selecionarPlaca = (placa) => {
-            document.getElementById('placa-view').innerText = placa;
-            window.mudarAba('aba-estacionar');
-            document.getElementById('btn-estacionar-main').classList.remove('opacity-50', 'pointer-events-none');
-            document.getElementById('btn-estacionar-main').innerText = "ESTACIONAR AGORA";
-        };
-
-        // --- OUTRAS FUNÇÕES ---
-        function carregarDadosUsuario(uid) {
+        // --- VAGA E SALDO ---
+        function monitorarUsuario(uid) {
             onValue(ref(db, `usuarios/${uid}`), (snap) => {
                 const d = snap.val();
-                document.getElementById('saldo-display').innerText = `R$ ${(d?.saldo || 0).toFixed(2).replace('.',',')}`;
+                saldoLocal = d?.saldo || 0;
+                document.getElementById('saldo-display').innerText = `R$ ${saldoLocal.toFixed(2).replace('.',',')}`;
+                
+                if (d?.vagaAtiva) {
+                    document.getElementById('form-estacionar').classList.add('hidden');
+                    document.getElementById('vaga-ativa-box').classList.remove('hidden');
+                    document.getElementById('placa-ativa-label').innerText = d.vagaAtiva.placa;
+                    iniciarCronometro(d.vagaAtiva);
+                } else {
+                    document.getElementById('vaga-ativa-box').classList.add('hidden');
+                    document.getElementById('form-estacionar').classList.remove('hidden');
+                    clearInterval(timerCron);
+                }
             });
+        }
+
+        window.ativarVaga = async () => {
+            const vH = parseFloat(document.getElementById('zona-select').value);
+            if (saldoLocal < vH) return alert("Saldo insuficiente!");
+            await update(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), {
+                placa: document.getElementById('placa-view').innerText,
+                inicio: Date.now(),
+                final: Date.now() + 3600000,
+                valorHora: vH
+            });
+        };
+
+        window.sairDaVaga = async () => {
+            onValue(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), async (snap) => {
+                const v = snap.val(); if (!v) return;
+                const min = Math.max(1, Math.ceil((Date.now() - v.inicio) / 60000));
+                const tot = min * (v.valorHora / 60);
+                if (confirm(`Custo: R$ ${tot.toFixed(2)}. Sair?`)) {
+                    await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot });
+                    await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
+                }
+            }, {onlyOnce: true});
+        };
+
+        function iniciarCronometro(v) {
+            clearInterval(timerCron);
+            timerCron = setInterval(() => {
+                const agora = Date.now();
+                const res = v.final - agora;
+                document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil((agora-v.inicio)/60000)*(v.valorHora/60)).toFixed(2).replace('.',',')}`;
+                if(res <= 0) { document.getElementById('cronometro').innerText = "FIM"; return; }
+                const m = Math.floor((res%3600000)/60000), s = Math.floor((res%60000)/1000);
+                document.getElementById('cronometro').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            }, 1000);
         }
 
         window.mudarAba = (id, btn) => {
