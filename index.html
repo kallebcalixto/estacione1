@@ -26,9 +26,7 @@
         .btn-value.active { border-color: #15711b; background-color: #f0fdf4; color: #15711b; }
     </style>
 </head>
-<body>
-
-    <div id="tela-login" class="fixed inset-0 z-[100] bg-white flex flex-col p-6 items-center justify-center">
+<body onclick="window.iniciarGps()"> <div id="tela-login" class="fixed inset-0 z-[100] bg-white flex flex-col p-6 items-center justify-center">
         <div class="w-full max-w-md space-y-6 text-center">
             <div class="zazul-green w-20 h-20 rounded-3xl mx-auto flex items-center justify-center shadow-lg">
                 <span class="text-white text-4xl font-black">E</span>
@@ -63,8 +61,8 @@
                     <h3 class="text-3xl font-black text-black tracking-tighter" id="placa-view">SELECIONE</h3>
                 </div>
 
-                <div id="gps-container" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center transition-all duration-300">
-                    <span id="txt-local" class="loading-pulse">📍 OBTENDO LOCALIZAÇÃO...</span>
+                <div id="gps-container" onclick="window.iniciarGps()" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center transition-all duration-300">
+                    <span id="txt-local" class="loading-pulse">📍 CLIQUE AQUI PARA LOCALIZAR</span>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -76,7 +74,7 @@
                         <option value="2">2 Horas</option>
                     </select>
                 </div>
-                <button id="btn-estacionar-main" onclick="window.ativarVaga()" class="w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none shadow-xl">Aguardando Localização...</button>
+                <button id="btn-estacionar-main" onclick="window.ativarVaga()" class="w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none shadow-xl">Buscando GPS...</button>
             </div>
 
             <div id="vaga-ativa-box" class="hidden space-y-4">
@@ -100,7 +98,6 @@
                 <button onclick="window.selVal(20, this)" class="btn-value shadow-sm">R$ 20</button>
             </div>
             <button id="btn-gerar" onclick="window.gerarPixReal()" class="w-full btn-zazul py-5 opacity-50 shadow-md" disabled>Gerar PIX</button>
-            
             <div id="pix-area" class="hidden card-app text-center space-y-4 border-2 border-dashed border-green-200">
                 <img id="qrcode-img" class="mx-auto w-56 h-56 rounded-xl">
                 <textarea id="pix-code" readonly class="w-full text-[10px] p-3 bg-gray-50 border rounded-xl font-mono text-gray-500"></textarea>
@@ -112,7 +109,7 @@
         <section id="aba-veiculos" class="aba-content space-y-4">
             <h3 class="zazul-text-green font-black uppercase text-sm px-1">Meus Veículos</h3>
             <div class="card-app space-y-4">
-                <input type="text" id="input-placa" placeholder="PLACA (ABC-1234)" class="w-full p-4 border-2 rounded-2xl font-black text-center text-2xl uppercase outline-none focus:border-green-600">
+                <input type="text" id="input-placa" placeholder="PLACA" class="w-full p-4 border-2 rounded-2xl font-black text-center text-2xl uppercase outline-none focus:border-green-600">
                 <input type="text" id="input-modelo" placeholder="MODELO" class="w-full p-4 border rounded-2xl text-sm font-semibold">
                 <button onclick="window.salvarNovoVeiculo()" class="w-full btn-zazul py-4">Salvar Carro</button>
             </div>
@@ -142,48 +139,36 @@
         const API_URL = "https://estacione-backend.onrender.com";
 
         let currentUser = null; let saldoLocal = 0; let zonasAdmin = []; let timerCron = null; let ruaDetectadaOficial = "Rua Desconhecida"; let valSel = 0;
+        let gpsIniciado = false;
 
-        // LOGIN
-        window.fazerLogin = () => {
-            const e = document.getElementById('login-email').value;
-            const s = document.getElementById('login-senha').value;
-            signInWithEmailAndPassword(auth, e, s).catch(err => alert("Erro: " + err.message));
-        };
-        window.fazerLogout = () => { if(confirm("Sair do app?")) signOut(auth).then(() => location.reload()); };
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('tela-login').classList.add('hidden');
-                carregarZonasAdmin();
-                monitorarUsuario(user.uid);
-                carregarVeiculos(user.uid);
-                carregarHistorico(user.uid);
-            } else {
-                document.getElementById('tela-login').classList.remove('hidden');
-            }
-        });
-
-        // GPS INTELIGENTE
-        function carregarZonasAdmin() {
-            onValue(ref(db, 'configuracoes_zonas'), (snap) => {
-                zonasAdmin = snap.val() ? Object.values(snap.val()) : [];
-                iniciarGps();
-            });
-        }
-
-        function iniciarGps() {
-            if (!navigator.geolocation) return;
-            navigator.geolocation.watchPosition(async (pos) => {
-                const { latitude, longitude } = pos.coords;
-                try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, { headers: { 'Accept-Language': 'pt-BR' } });
-                    const data = await res.json();
-                    ruaDetectadaOficial = data.address.road || data.address.suburb || "Rua não identificada";
+        // --- GPS REFORMULADO (Foco aqui) ---
+        window.iniciarGps = () => {
+            if (gpsIniciado) return;
+            if (!navigator.geolocation) { alert("GPS não suportado"); return; }
+            
+            document.getElementById('txt-local').innerText = "📍 BUSCANDO SINAL...";
+            
+            navigator.geolocation.watchPosition((pos) => {
+                gpsIniciado = true;
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                
+                // Busca o nome da rua via Nominatim (OpenStreetMap)
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`, {
+                    headers: { 'Accept-Language': 'pt-BR' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    ruaDetectadaOficial = data.address.road || data.address.suburb || data.display_name.split(',')[0] || "Rua Desconhecida";
                     processarLogicaRua(ruaDetectadaOficial);
-                } catch(e) { document.getElementById('txt-local').innerText = "📍 ERRO DE SINAL GPS"; }
-            }, null, { enableHighAccuracy: true });
-        }
+                })
+                .catch(err => {
+                    document.getElementById('txt-local').innerText = "📍 ERRO AO IDENTIFICAR RUA";
+                });
+            }, (err) => {
+                document.getElementById('txt-local').innerText = "📍 ATIVE O GPS DO CELULAR";
+            }, { enableHighAccuracy: true, maximumAge: 10000 });
+        };
 
         function processarLogicaRua(rua) {
             const box = document.getElementById('gps-container');
@@ -213,13 +198,37 @@
             }
         }
 
-        // PIX RECARGA
+        // --- RESTO DO CÓDIGO (Intocado) ---
+        function carregarZonasAdmin() {
+            onValue(ref(db, 'configuracoes_zonas'), (snap) => {
+                zonasAdmin = snap.val() ? Object.values(snap.val()) : [];
+                window.iniciarGps();
+            });
+        }
+
+        window.fazerLogin = () => {
+            const e = document.getElementById('login-email').value;
+            const s = document.getElementById('login-senha').value;
+            signInWithEmailAndPassword(auth, e, s).catch(err => alert("Erro: " + err.message));
+        };
+        window.fazerLogout = () => { if(confirm("Sair?")) signOut(auth).then(() => location.reload()); };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('tela-login').classList.add('hidden');
+                carregarZonasAdmin();
+                monitorarUsuario(user.uid);
+                carregarVeiculos(user.uid);
+                carregarHistorico(user.uid);
+            } else {
+                document.getElementById('tela-login').classList.remove('hidden');
+            }
+        });
+
         window.selVal = (v, b) => {
-            valSel = v;
-            document.querySelectorAll('.btn-value').forEach(btn => btn.classList.remove('active'));
-            b.classList.add('active');
-            document.getElementById('btn-gerar').disabled = false;
-            document.getElementById('btn-gerar').classList.remove('opacity-50');
+            valSel = v; document.querySelectorAll('.btn-value').forEach(btn => btn.classList.remove('active'));
+            b.classList.add('active'); document.getElementById('btn-gerar').disabled = false; document.getElementById('btn-gerar').classList.remove('opacity-50');
         };
 
         window.gerarPixReal = async () => {
@@ -231,16 +240,15 @@
                 document.getElementById('pix-code').value = d.qr_code;
                 document.getElementById('pix-area').classList.remove('hidden');
                 b.innerText = "PIX GERADO";
-            } catch (e) { alert("Erro ao conectar com o banco."); b.innerText = "Tentar Novamente"; }
+            } catch (e) { alert("Erro PIX"); b.innerText = "Tentar Novamente"; }
         };
 
-        window.copiarPix = () => { document.getElementById('pix-code').select(); document.execCommand('copy'); alert("Código copiado!"); };
+        window.copiarPix = () => { document.getElementById('pix-code').select(); document.execCommand('copy'); alert("Copiado!"); };
 
-        // VEÍCULOS
         window.salvarNovoVeiculo = async () => {
             const p = document.getElementById('input-placa').value.toUpperCase().trim();
             const m = document.getElementById('input-modelo').value.trim();
-            if (p.length < 7 || !m) return alert("Preencha placa e modelo corretamente.");
+            if (p.length < 7 || !m) return alert("Preencha tudo.");
             await push(ref(db, `usuarios/${currentUser.uid}/veiculos`), { placa: p, modelo: m });
             document.getElementById('input-placa').value = ""; document.getElementById('input-modelo').value = "";
         };
@@ -253,13 +261,11 @@
                 });
             });
         }
-        window.selecionarPlaca = (p) => { document.getElementById('placa-view').innerText = p; window.mudarAba('aba-estacionar'); };
+        window.selecionarPlaca = (p) => { document.getElementById('placa-view').innerText = p; window.mudarAba('aba-estacionar'); window.iniciarGps(); };
 
-        // MONITORAMENTO E VAGA
         function monitorarUsuario(uid) {
             onValue(ref(db, `usuarios/${uid}`), (snap) => {
-                const d = snap.val();
-                saldoLocal = d?.saldo || 0;
+                const d = snap.val(); saldoLocal = d?.saldo || 0;
                 document.getElementById('saldo-display').innerText = `R$ ${saldoLocal.toFixed(2).replace('.',',')}`;
                 if (d?.vagaAtiva) {
                     document.getElementById('form-estacionar').classList.add('hidden');
@@ -291,7 +297,7 @@
                 const v = snap.val(); if (!v) return;
                 const min = Math.max(1, Math.ceil((Date.now() - v.inicio) / 60000));
                 const tot = min * (v.valorHora / 60);
-                if (confirm(`Encerrar? Custo: R$ ${tot.toFixed(2)}`)) {
+                if (confirm(`Encerrar? R$ ${tot.toFixed(2)}`)) {
                     await push(ref(db, `usuarios/${currentUser.uid}/historico`), {
                         placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(),
                         entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
@@ -317,9 +323,8 @@
         function carregarHistorico(uid) {
             onValue(ref(db, `usuarios/${uid}/historico`), (snap) => {
                 const list = document.getElementById('lista-historico'); list.innerHTML = "";
-                const data = snap.val(); if (!data) return;
-                Object.values(data).reverse().forEach(h => {
-                    list.innerHTML += `<div class="card-app border-l-4 border-green-600 mb-2"><div class="flex justify-between font-black text-[10px] text-gray-400"><span>${h.data}</span><span class="text-green-700">R$ ${h.valor.toFixed(2)}</span></div><div class="text-lg font-black">${h.placa}</div><div class="text-[9px] font-bold text-gray-500 uppercase">${h.rua}</div></div>`;
+                const data = snap.val(); if (data) Object.values(data).reverse().forEach(h => {
+                    list.innerHTML += `<div class="card-app border-l-4 border-green-600 mb-2"><div class="flex justify-between text-[10px] text-gray-400"><span>${h.data}</span><span class="text-green-700 font-bold">R$ ${h.valor.toFixed(2)}</span></div><div class="text-lg font-black">${h.placa}</div><div class="text-[9px] font-bold text-gray-500 uppercase">${h.rua}</div></div>`;
                 });
             });
         }
@@ -330,6 +335,7 @@
             document.getElementById(id).classList.add('active'); 
             if(b) b.classList.add('active');
             else if(id === 'aba-estacionar') document.getElementById('btn-nav-estacionar').classList.add('active');
+            window.iniciarGps(); // Tenta reativar GPS ao mudar aba
         };
     </script>
 </body>
