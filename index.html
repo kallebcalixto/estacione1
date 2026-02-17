@@ -275,12 +275,32 @@
 
         window.copiarPix = () => { document.getElementById('pix-code').select(); document.execCommand('copy'); alert("Copiado!"); };
 
+        // --- FUNÇÃO DE RECIBOS ATUALIZADA ---
         function carregarHistorico(uid) {
             onValue(ref(db, `usuarios/${uid}/historico`), (snap) => {
-                const list = document.getElementById('lista-historico'); list.innerHTML = "";
-                const data = snap.val(); if (data) Object.values(data).reverse().forEach(h => {
-                    list.innerHTML += `<div class="card-app border-l-4 border-green-600 mb-2"><div class="flex justify-between text-[10px] text-gray-400 font-bold"><span>${h.data}</span><span class="text-green-700">R$ ${h.valor.toFixed(2)}</span></div><div class="text-lg font-black">${h.placa}</div><div class="text-[9px] font-bold text-gray-500 uppercase">${h.rua}</div></div>`;
-                });
+                const list = document.getElementById('lista-historico'); 
+                list.innerHTML = "";
+                const data = snap.val(); 
+                if (data) {
+                    Object.values(data).reverse().forEach(h => {
+                        const valorFormatado = (h.valor || 0).toFixed(2).replace('.', ',');
+                        list.innerHTML += `
+                            <div class="card-app border-l-4 border-green-600 mb-2">
+                                <div class="flex justify-between text-[10px] text-gray-400 font-bold">
+                                    <span>${h.data || ''}</span>
+                                    <span class="text-green-700">R$ ${valorFormatado}</span>
+                                </div>
+                                <div class="text-lg font-black">${h.placa || 'PLACA'}</div>
+                                <div class="text-[9px] font-bold text-gray-500 uppercase">${h.rua || 'Rua não informada'}</div>
+                                <div class="flex justify-between text-[8px] mt-1 text-gray-400 font-bold uppercase">
+                                    <span>Entrada: ${h.entrada || '--:--'}</span>
+                                    <span>Saída: ${h.saida || '--:--'}</span>
+                                </div>
+                            </div>`;
+                    });
+                } else {
+                    list.innerHTML = `<p class="text-center text-gray-400 text-xs font-bold py-10 uppercase">Nenhum recibo encontrado</p>`;
+                }
             });
         }
 
