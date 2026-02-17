@@ -8,42 +8,44 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; padding-bottom: 100px; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; padding-bottom: 100px; overflow-x: hidden; width: 100%; }
         .zazul-green { background-color: #15711b; }
         .zazul-text-green { color: #15711b; }
+        .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding: 12px 0 25px 0; z-index: 50; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; flex: 1; background: none; border: none; }
+        .nav-item.active { color: #15711b; }
         .btn-zazul { background-color: #15711b; color: white; border-radius: 1rem; font-weight: 700; text-transform: uppercase; }
-        .btn-zazul:active { transform: scale(0.95); }
+        .btn-zazul:active { transform: scale(0.98); }
         .aba-content { display: none; width: 100%; animation: fadeIn 0.3s ease; }
         .aba-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .card-app { background: white; border-radius: 1.25rem; padding: 1.25rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding: 12px 0 25px 0; z-index: 50; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; flex: 1; background: none; border: none; }
-        .nav-item.active { color: #15711b; }
         .loading-pulse { animation: pulse 1.8s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        .btn-value { border: 2px solid #e5e7eb; border-radius: 1rem; padding: 15px 10px; font-weight: 800; color: #475569; background: white; }
+        .btn-value.active { border-color: #15711b; background-color: #f0fdf4; color: #15711b; }
     </style>
 </head>
 <body>
 
-    <div id="tela-login" class="fixed inset-0 z-[100] bg-white flex flex-col p-6 items-center justify-center" style="display: flex;">
+    <div id="tela-login" class="fixed inset-0 z-[100] bg-white flex flex-col p-6 items-center justify-center">
         <div class="w-full max-w-md space-y-6 text-center">
             <div class="zazul-green w-20 h-20 rounded-3xl mx-auto flex items-center justify-center shadow-lg">
                 <span class="text-white text-4xl font-black">E</span>
             </div>
-            <h2 class="text-2xl font-black zazul-text-green">ENTRAR</h2>
+            <h2 class="text-2xl font-black zazul-text-green uppercase">Entrar</h2>
             <div class="space-y-3">
                 <input type="email" id="login-email" placeholder="E-mail" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
                 <input type="password" id="login-senha" placeholder="Senha" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
-                <button onclick="window.fazerLogin()" class="w-full btn-zazul py-4 text-lg">Acessar</button>
+                <button onclick="window.fazerLogin()" class="w-full btn-zazul py-4 text-lg">Acessar Conta</button>
             </div>
         </div>
     </div>
 
-    <header class="zazul-green text-white p-4 flex justify-between items-center sticky top-0 z-40">
+    <header class="zazul-green text-white p-4 flex justify-between items-center sticky top-0 z-40 shadow-md">
         <div class="w-10"></div> 
         <h1 class="text-lg font-black tracking-widest uppercase">Estacione Colombo</h1>
-        <button onclick="window.fazerLogout()" class="text-[10px] font-bold border border-white/30 px-3 py-1 rounded-lg">Sair</button>
+        <button onclick="window.fazerLogout()" class="text-[10px] font-bold border border-white/30 px-3 py-1 rounded-lg uppercase">Sair</button>
     </header>
 
     <main class="max-w-md mx-auto p-4 space-y-4">
@@ -52,7 +54,7 @@
             <div class="card-app text-center py-6">
                 <p class="text-gray-500 font-bold text-sm uppercase">Saldo Disponível</p>
                 <h2 class="text-4xl font-black text-black my-2" id="saldo-display">R$ 0,00</h2>
-                <button onclick="window.mudarAba('aba-pix')" class="mt-2 text-xs font-black text-green-700 border border-green-200 px-4 py-2 rounded-full bg-green-50 uppercase">＋ Adicionar Crédito</button>
+                <button onclick="window.mudarAba('aba-recarga')" class="mt-4 text-xs font-black text-green-700 border border-green-200 px-6 py-3 rounded-full bg-green-50 uppercase">＋ Adicionar Crédito</button>
             </div>
 
             <div id="form-estacionar" class="space-y-4">
@@ -67,14 +69,14 @@
 
                 <div class="grid grid-cols-2 gap-3">
                     <select id="zona-select" class="w-full p-4 border rounded-2xl font-bold text-sm bg-white border-gray-200">
-                        <option value="">Aguardando...</option>
+                        <option value="">Aguardando Rua...</option>
                     </select>
                     <select id="tempo-select" class="w-full p-4 border rounded-2xl font-bold text-sm bg-white border-gray-200">
                         <option value="1">1 Hora</option>
                         <option value="2">2 Horas</option>
                     </select>
                 </div>
-                <button id="btn-estacionar-main" onclick="window.ativarVaga()" class="w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none">Aguardando Localização...</button>
+                <button id="btn-estacionar-main" onclick="window.ativarVaga()" class="w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none shadow-xl">Aguardando Localização...</button>
             </div>
 
             <div id="vaga-ativa-box" class="hidden space-y-4">
@@ -86,40 +88,40 @@
                         <div><p class="text-[10px] text-gray-400 font-bold uppercase">Restante</p><span id="cronometro" class="font-black text-xl text-blue-600">00:00</span></div>
                     </div>
                 </div>
-                <button onclick="window.sairDaVaga()" class="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase">Encerrar Vaga</button>
+                <button onclick="window.sairDaVaga()" class="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase shadow-lg">Encerrar Vaga</button>
             </div>
         </section>
 
-        <section id="aba-pix" class="aba-content space-y-4">
-            <h3 class="zazul-text-green font-black text-sm px-1">ADICIONAR CRÉDITO</h3>
-            <div class="card-app text-center space-y-4">
-                <p class="text-gray-500 text-xs font-bold uppercase">Pagamento via PIX</p>
-                <div class="bg-gray-100 w-48 h-48 mx-auto rounded-2xl flex items-center justify-center border-2 border-dashed">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=COLOQUE_SUA_CHAVE_AQUI" alt="QR PIX" id="pix-qr">
-                </div>
-                <div class="space-y-2">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase">Chave PIX Copia e Cola</p>
-                    <input type="text" id="pix-chave" value="suachavepix@aqui.com" readonly class="w-full p-3 border rounded-xl text-center text-xs font-mono bg-gray-50">
-                    <button onclick="window.copiarPix()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-xs uppercase">Copiar Chave</button>
-                </div>
-                <p class="text-[10px] text-red-500 font-bold leading-tight">Após o pagamento, o saldo será liberado em até 5 minutos pela nossa central.</p>
-                <button onclick="window.mudarAba('aba-estacionar')" class="text-gray-400 font-bold text-[10px] uppercase underline">Voltar</button>
+        <section id="aba-recarga" class="aba-content space-y-4">
+            <h3 class="zazul-text-green font-black uppercase text-sm text-center tracking-wider">Selecione o Valor</h3>
+            <div class="grid grid-cols-3 gap-3">
+                <button onclick="window.selVal(5, this)" class="btn-value shadow-sm">R$ 5</button>
+                <button onclick="window.selVal(10, this)" class="btn-value shadow-sm">R$ 10</button>
+                <button onclick="window.selVal(20, this)" class="btn-value shadow-sm">R$ 20</button>
+            </div>
+            <button id="btn-gerar" onclick="window.gerarPixReal()" class="w-full btn-zazul py-5 opacity-50 shadow-md" disabled>Gerar PIX</button>
+            
+            <div id="pix-area" class="hidden card-app text-center space-y-4 border-2 border-dashed border-green-200">
+                <img id="qrcode-img" class="mx-auto w-56 h-56 rounded-xl">
+                <textarea id="pix-code" readonly class="w-full text-[10px] p-3 bg-gray-50 border rounded-xl font-mono text-gray-500"></textarea>
+                <button onclick="window.copiarPix()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold uppercase text-sm">Copiar Código PIX</button>
+                <button onclick="window.mudarAba('aba-estacionar')" class="w-full text-gray-400 font-bold uppercase text-xs">Voltar</button>
             </div>
         </section>
 
         <section id="aba-veiculos" class="aba-content space-y-4">
-            <h3 class="zazul-text-green font-black text-sm px-1">CADASTRAR CARRO</h3>
+            <h3 class="zazul-text-green font-black uppercase text-sm px-1">Meus Veículos</h3>
             <div class="card-app space-y-4">
-                <input type="text" id="input-placa" placeholder="PLACA" class="w-full p-4 border-2 rounded-2xl font-black text-center text-2xl uppercase">
+                <input type="text" id="input-placa" placeholder="PLACA (ABC-1234)" class="w-full p-4 border-2 rounded-2xl font-black text-center text-2xl uppercase outline-none focus:border-green-600">
                 <input type="text" id="input-modelo" placeholder="MODELO" class="w-full p-4 border rounded-2xl text-sm font-semibold">
-                <button onclick="window.salvarNovoVeiculo()" class="w-full btn-zazul py-4">Salvar</button>
+                <button onclick="window.salvarNovoVeiculo()" class="w-full btn-zazul py-4">Salvar Carro</button>
             </div>
             <div id="lista-veiculos" class="space-y-3"></div>
         </section>
 
         <section id="aba-historico" class="aba-content space-y-4">
-            <h3 class="zazul-text-green font-black text-sm px-1">MEUS RECIBOS</h3>
-            <div id="lista-recibos" class="space-y-3"></div>
+            <h3 class="zazul-text-green font-black uppercase text-sm px-1">Meus Recibos</h3>
+            <div id="lista-historico" class="space-y-3"></div>
         </section>
 
     </main>
@@ -135,45 +137,34 @@
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getDatabase, ref, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        const firebaseConfig = { 
-            apiKey: "AIzaSyDS2D6-KCvsJomst0m2qs3J93UEq3kWw1Q", 
-            authDomain: "estacione-6cfbf.firebaseapp.com", 
-            databaseURL: "https://estacione-6cfbf-default-rtdb.firebaseio.com", 
-            projectId: "estacione-6cfbf", 
-            appId: "1:490946040222:web:0071714b8e6d645459468f" 
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getDatabase(app);
+        const firebaseConfig = { apiKey: "AIzaSyDS2D6-KCvsJomst0m2qs3J93UEq3kWw1Q", authDomain: "estacione-6cfbf.firebaseapp.com", databaseURL: "https://estacione-6cfbf-default-rtdb.firebaseio.com", projectId: "estacione-6cfbf", appId: "1:490946040222:web:0071714b8e6d645459468f" };
+        const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getDatabase(app);
+        const API_URL = "https://estacione-backend.onrender.com";
 
-        let currentUser = null;
-        let saldoLocal = 0;
-        let zonasAdmin = [];
-        let timerCron = null;
-        let ruaDetectadaOficial = "Não identificada";
+        let currentUser = null; let saldoLocal = 0; let zonasAdmin = []; let timerCron = null; let ruaDetectadaOficial = "Rua Desconhecida"; let valSel = 0;
 
+        // LOGIN
         window.fazerLogin = () => {
             const e = document.getElementById('login-email').value;
             const s = document.getElementById('login-senha').value;
             signInWithEmailAndPassword(auth, e, s).catch(err => alert("Erro: " + err.message));
         };
-        window.fazerLogout = () => signOut(auth).then(() => location.reload());
+        window.fazerLogout = () => { if(confirm("Sair do app?")) signOut(auth).then(() => location.reload()); };
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                document.getElementById('tela-login').style.display = 'none';
+                document.getElementById('tela-login').classList.add('hidden');
                 carregarZonasAdmin();
                 monitorarUsuario(user.uid);
                 carregarVeiculos(user.uid);
-                carregarRecibos(user.uid);
+                carregarHistorico(user.uid);
             } else {
-                document.getElementById('tela-login').style.display = 'flex';
+                document.getElementById('tela-login').classList.remove('hidden');
             }
         });
 
-        // --- GPS ---
+        // GPS INTELIGENTE
         function carregarZonasAdmin() {
             onValue(ref(db, 'configuracoes_zonas'), (snap) => {
                 zonasAdmin = snap.val() ? Object.values(snap.val()) : [];
@@ -188,9 +179,9 @@
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, { headers: { 'Accept-Language': 'pt-BR' } });
                     const data = await res.json();
-                    ruaDetectadaOficial = data.address.road || data.address.suburb || "Rua Desconhecida";
+                    ruaDetectadaOficial = data.address.road || data.address.suburb || "Rua não identificada";
                     processarLogicaRua(ruaDetectadaOficial);
-                } catch(e) {}
+                } catch(e) { document.getElementById('txt-local').innerText = "📍 ERRO DE SINAL GPS"; }
             }, null, { enableHighAccuracy: true });
         }
 
@@ -200,59 +191,75 @@
             const sel = document.getElementById('zona-select');
             const btn = document.getElementById('btn-estacionar-main');
             const placa = document.getElementById('placa-view').innerText;
+
             const ruaLimpa = rua.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace("rua", "").trim();
-            
             const zona = zonasAdmin.find(z => ruaLimpa.includes(z.rua.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace("rua", "").trim()));
 
             if (zona) {
-                box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-green-100 text-green-700 text-center";
-                txt.innerText = `📍 ${rua.toUpperCase()}`;
-                sel.innerHTML = `<option value="${zona.preco}">${zona.setor}</option>`;
+                box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-green-100 text-green-700 text-center border-green-300";
+                txt.innerHTML = `📍 ${rua.toUpperCase()}`;
+                sel.innerHTML = `<option value="${zona.preco}">${zona.setor} - R$ ${zona.preco.toFixed(2)}</option>`;
                 if(placa !== "SELECIONE") {
-                    btn.className = "w-full btn-zazul py-5 text-lg"; btn.innerText = "ESTACIONAR AGORA";
+                    btn.className = "w-full btn-zazul py-5 text-lg shadow-lg";
+                    btn.innerText = "ESTACIONAR AGORA";
                     btn.classList.remove('opacity-50', 'pointer-events-none');
                 }
             } else {
                 box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center";
-                txt.innerHTML = `📍 ${rua.toUpperCase()} <br><span class="text-red-500 text-[10px]">FORA DA ÁREA</span>`;
-                btn.classList.add('opacity-50', 'pointer-events-none');
+                txt.innerHTML = `📍 ${rua.toUpperCase()} <br><span class="text-red-500 text-[10px]">FORA DA ÁREA AZUL</span>`;
+                sel.innerHTML = `<option value="">Indisponível</option>`;
+                btn.className = "w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none";
+                btn.innerText = "FORA DE ÁREA";
             }
         }
 
-        // --- PIX ---
-        window.copiarPix = () => {
-            const copyText = document.getElementById("pix-chave");
-            copyText.select();
-            copyText.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(copyText.value);
-            alert("Chave PIX copiada!");
+        // PIX RECARGA
+        window.selVal = (v, b) => {
+            valSel = v;
+            document.querySelectorAll('.btn-value').forEach(btn => btn.classList.remove('active'));
+            b.classList.add('active');
+            document.getElementById('btn-gerar').disabled = false;
+            document.getElementById('btn-gerar').classList.remove('opacity-50');
         };
 
-        // --- CARROS ---
+        window.gerarPixReal = async () => {
+            const b = document.getElementById('btn-gerar'); b.innerText = "GERANDO...";
+            try {
+                const res = await fetch(`${API_URL}/gerar-pix`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ valor: valSel, email: currentUser.email, userId: currentUser.uid }) });
+                const d = await res.json();
+                document.getElementById('qrcode-img').src = `data:image/png;base64,${d.qr_code_base64}`;
+                document.getElementById('pix-code').value = d.qr_code;
+                document.getElementById('pix-area').classList.remove('hidden');
+                b.innerText = "PIX GERADO";
+            } catch (e) { alert("Erro ao conectar com o banco."); b.innerText = "Tentar Novamente"; }
+        };
+
+        window.copiarPix = () => { document.getElementById('pix-code').select(); document.execCommand('copy'); alert("Código copiado!"); };
+
+        // VEÍCULOS
         window.salvarNovoVeiculo = async () => {
             const p = document.getElementById('input-placa').value.toUpperCase().trim();
             const m = document.getElementById('input-modelo').value.trim();
-            if (p.length < 7 || !m) return alert("Erro");
+            if (p.length < 7 || !m) return alert("Preencha placa e modelo corretamente.");
             await push(ref(db, `usuarios/${currentUser.uid}/veiculos`), { placa: p, modelo: m });
             document.getElementById('input-placa').value = ""; document.getElementById('input-modelo').value = "";
         };
 
         function carregarVeiculos(uid) {
             onValue(ref(db, `usuarios/${uid}/veiculos`), (snap) => {
-                const lista = document.getElementById('lista-veiculos');
-                lista.innerHTML = "";
-                const dados = snap.val();
-                if (dados) Object.entries(dados).forEach(([id, v]) => {
-                    lista.innerHTML += `<div class="card-app flex justify-between items-center mb-2"><div><p class="font-black">${v.placa}</p></div><button onclick="window.selecionarPlaca('${v.placa}')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold">USAR</button></div>`;
+                const list = document.getElementById('lista-veiculos'); list.innerHTML = "";
+                const data = snap.val(); if (data) Object.entries(data).forEach(([id, v]) => {
+                    list.innerHTML += `<div class="card-app flex justify-between items-center mb-2"><div><p class="font-black text-xl">${v.placa}</p><p class="text-xs text-gray-400 font-bold uppercase">${v.modelo}</p></div><button onclick="window.selecionarPlaca('${v.placa}')" class="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold uppercase">Usar</button></div>`;
                 });
             });
         }
         window.selecionarPlaca = (p) => { document.getElementById('placa-view').innerText = p; window.mudarAba('aba-estacionar'); };
 
-        // --- VAGA E RECIBO ---
+        // MONITORAMENTO E VAGA
         function monitorarUsuario(uid) {
             onValue(ref(db, `usuarios/${uid}`), (snap) => {
-                const d = snap.val(); saldoLocal = d?.saldo || 0;
+                const d = snap.val();
+                saldoLocal = d?.saldo || 0;
                 document.getElementById('saldo-display').innerText = `R$ ${saldoLocal.toFixed(2).replace('.',',')}`;
                 if (d?.vagaAtiva) {
                     document.getElementById('form-estacionar').classList.add('hidden');
@@ -282,11 +289,13 @@
         window.sairDaVaga = async () => {
             onValue(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), async (snap) => {
                 const v = snap.val(); if (!v) return;
-                const tot = Math.max(1, Math.ceil((Date.now() - v.inicio) / 60000)) * (v.valorHora / 60);
-                if (confirm(`Encerrar? R$ ${tot.toFixed(2)}`)) {
+                const min = Math.max(1, Math.ceil((Date.now() - v.inicio) / 60000));
+                const tot = min * (v.valorHora / 60);
+                if (confirm(`Encerrar? Custo: R$ ${tot.toFixed(2)}`)) {
                     await push(ref(db, `usuarios/${currentUser.uid}/historico`), {
-                        placa: v.placa, rua: v.rua, entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
-                        saida: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), dia: new Date().toLocaleDateString(), valor: tot
+                        placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(),
+                        entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+                        saida: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
                     });
                     await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot });
                     await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
@@ -294,32 +303,32 @@
             }, {onlyOnce: true});
         };
 
-        function carregarRecibos(uid) {
-            onValue(ref(db, `usuarios/${uid}/historico`), (snap) => {
-                const lista = document.getElementById('lista-recibos'); lista.innerHTML = "";
-                const dados = snap.val();
-                if (dados) Object.values(dados).reverse().forEach(r => {
-                    lista.innerHTML += `<div class="card-app border-l-4 border-green-600 mb-2"><div class="flex justify-between text-[10px] font-black"><span>${r.dia}</span><span class="text-green-700">R$ ${r.valor.toFixed(2)}</span></div><div class="text-lg font-black">${r.placa}</div><div class="text-[9px] font-bold text-gray-400 uppercase">${r.rua}</div></div>`;
-                });
-            });
-        }
-
         function iniciarCronometro(v) {
             clearInterval(timerCron);
             timerCron = setInterval(() => {
                 const res = v.final - Date.now();
                 document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil((Date.now()-v.inicio)/60000)*(v.valorHora/60)).toFixed(2).replace('.',',')}`;
-                if(res <= 0) { document.getElementById('cronometro').innerText = "VENCIDO"; return; }
+                if(res <= 0) { document.getElementById('cronometro').innerText = "FIM"; return; }
                 const m = Math.floor((res%3600000)/60000), s = Math.floor((res%60000)/1000);
                 document.getElementById('cronometro').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             }, 1000);
         }
 
-        window.mudarAba = (id, btn) => {
+        function carregarHistorico(uid) {
+            onValue(ref(db, `usuarios/${uid}/historico`), (snap) => {
+                const list = document.getElementById('lista-historico'); list.innerHTML = "";
+                const data = snap.val(); if (!data) return;
+                Object.values(data).reverse().forEach(h => {
+                    list.innerHTML += `<div class="card-app border-l-4 border-green-600 mb-2"><div class="flex justify-between font-black text-[10px] text-gray-400"><span>${h.data}</span><span class="text-green-700">R$ ${h.valor.toFixed(2)}</span></div><div class="text-lg font-black">${h.placa}</div><div class="text-[9px] font-bold text-gray-500 uppercase">${h.rua}</div></div>`;
+                });
+            });
+        }
+
+        window.mudarAba = (id, b) => {
             document.querySelectorAll('.aba-content').forEach(a => a.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(btn) btn.classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(id).classList.add('active'); 
+            if(b) b.classList.add('active');
             else if(id === 'aba-estacionar') document.getElementById('btn-nav-estacionar').classList.add('active');
         };
     </script>
