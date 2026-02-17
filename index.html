@@ -8,17 +8,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; padding-bottom: 100px; overflow-x: hidden; width: 100%; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; padding-bottom: 100px; }
         .zazul-green { background-color: #15711b; }
         .zazul-text-green { color: #15711b; }
-        .btn-zazul { background-color: #15711b; color: white; border-radius: 1rem; font-weight: 700; text-transform: uppercase; transition: all 0.2s; }
+        .btn-zazul { background-color: #15711b; color: white; border-radius: 1rem; font-weight: 700; text-transform: uppercase; }
         .btn-zazul:active { transform: scale(0.95); }
         .aba-content { display: none; width: 100%; animation: fadeIn 0.3s ease; }
         .aba-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .card-app { background: white; border-radius: 1.25rem; padding: 1.25rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding: 12px 0 25px 0; z-index: 50; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; flex: 1; border: none; background: none; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; flex: 1; background: none; border: none; }
         .nav-item.active { color: #15711b; }
         .loading-pulse { animation: pulse 1.8s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
@@ -31,11 +31,11 @@
             <div class="zazul-green w-20 h-20 rounded-3xl mx-auto flex items-center justify-center shadow-lg">
                 <span class="text-white text-4xl font-black">E</span>
             </div>
-            <h2 class="text-2xl font-black zazul-text-green uppercase">Entrar no Sistema</h2>
+            <h2 class="text-2xl font-black zazul-text-green">ENTRAR</h2>
             <div class="space-y-3">
                 <input type="email" id="login-email" placeholder="E-mail" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
                 <input type="password" id="login-senha" placeholder="Senha" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
-                <button onclick="window.fazerLogin()" class="w-full btn-zazul py-4 text-lg">Acessar Conta</button>
+                <button onclick="window.fazerLogin()" class="w-full btn-zazul py-4 text-lg">Acessar</button>
             </div>
         </div>
     </div>
@@ -60,7 +60,7 @@
                     <h3 class="text-3xl font-black text-black tracking-tighter" id="placa-view">SELECIONE</h3>
                 </div>
 
-                <div id="gps-container" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center">
+                <div id="gps-container" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center transition-all duration-300">
                     <span id="txt-local" class="loading-pulse">📍 OBTENDO LOCALIZAÇÃO...</span>
                 </div>
 
@@ -81,7 +81,7 @@
                     <p class="text-green-600 font-black text-xs uppercase">Vaga Ativa</p>
                     <h3 id="placa-ativa-label" class="text-4xl font-black my-3">---</h3>
                     <div class="grid grid-cols-2 gap-4 mt-4 border-t pt-4">
-                        <div><p class="text-[10px] text-gray-400 font-bold uppercase">Custo Atual</p><span id="valor-correndo" class="font-black text-xl">R$ 0,00</span></div>
+                        <div><p class="text-[10px] text-gray-400 font-bold uppercase">Custo</p><span id="valor-correndo" class="font-black text-xl">R$ 0,00</span></div>
                         <div><p class="text-[10px] text-gray-400 font-bold uppercase">Restante</p><span id="cronometro" class="font-black text-xl text-blue-600">00:00</span></div>
                     </div>
                 </div>
@@ -90,9 +90,9 @@
         </section>
 
         <section id="aba-veiculos" class="aba-content space-y-4">
-            <h3 class="zazul-text-green font-black uppercase text-sm px-1">Novo Veículo</h3>
+            <h3 class="zazul-text-green font-black text-sm px-1">CADASTRAR CARRO</h3>
             <div class="card-app space-y-4">
-                <input type="text" id="input-placa" placeholder="PLACA" class="w-full p-4 border-2 rounded-2xl font-black uppercase text-center text-2xl outline-none">
+                <input type="text" id="input-placa" placeholder="PLACA" class="w-full p-4 border-2 rounded-2xl font-black text-center text-2xl uppercase">
                 <input type="text" id="input-modelo" placeholder="MODELO" class="w-full p-4 border rounded-2xl text-sm font-semibold">
                 <button onclick="window.salvarNovoVeiculo()" class="w-full btn-zazul py-4">Salvar</button>
             </div>
@@ -100,9 +100,8 @@
         </section>
 
         <section id="aba-historico" class="aba-content space-y-4">
-            <h3 class="zazul-text-green font-black uppercase text-sm px-1">Meus Recibos</h3>
-            <div id="lista-recibos" class="space-y-3">
-                </div>
+            <h3 class="zazul-text-green font-black text-sm px-1">MEUS RECIBOS</h3>
+            <div id="lista-recibos" class="space-y-3"></div>
         </section>
 
     </main>
@@ -134,8 +133,9 @@
         let saldoLocal = 0;
         let zonasAdmin = [];
         let timerCron = null;
-        let ruaAtualGlobal = "";
+        let ruaDetectadaOficial = "Não identificada";
 
+        // --- LOGIN ---
         window.fazerLogin = () => {
             const e = document.getElementById('login-email').value;
             const s = document.getElementById('login-senha').value;
@@ -156,6 +156,7 @@
             }
         });
 
+        // --- GPS INTELIGENTE ---
         function carregarZonasAdmin() {
             onValue(ref(db, 'configuracoes_zonas'), (snap) => {
                 zonasAdmin = snap.val() ? Object.values(snap.val()) : [];
@@ -168,44 +169,63 @@
             navigator.geolocation.watchPosition(async (pos) => {
                 const { latitude, longitude } = pos.coords;
                 try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                    // API Nominatim com User-Agent para evitar bloqueio
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
+                        headers: { 'Accept-Language': 'pt-BR' }
+                    });
                     const data = await res.json();
-                    ruaAtualGlobal = data.address.road || "Rua desconhecida";
-                    processarRua(ruaAtualGlobal.toLowerCase());
-                } catch(e) {}
-            }, null, { enableHighAccuracy: true });
+                    ruaDetectadaOficial = data.address.road || data.address.suburb || "Rua Desconhecida";
+                    processarLogicaRua(ruaDetectadaOficial);
+                } catch(e) { 
+                    console.error("GPS Error:", e);
+                    document.getElementById('txt-local').innerText = "📍 ERRO DE SINAL GPS";
+                }
+            }, null, { enableHighAccuracy: true, timeout: 5000 });
         }
 
-        function processarRua(ruaGps) {
+        function limparTexto(t) {
+            return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                    .replace("rua", "").replace("avenida", "").replace("av.", "").trim();
+        }
+
+        function processarLogicaRua(rua) {
             const box = document.getElementById('gps-container');
             const txt = document.getElementById('txt-local');
             const sel = document.getElementById('zona-select');
             const btn = document.getElementById('btn-estacionar-main');
             const placa = document.getElementById('placa-view').innerText;
 
-            const zona = zonasAdmin.find(z => ruaGps.includes(z.rua.toLowerCase().trim()));
+            const ruaLimpaGps = limparTexto(rua);
+            const zona = zonasAdmin.find(z => {
+                const ruaLimpaAdmin = limparTexto(z.rua);
+                return ruaLimpaGps.includes(ruaLimpaAdmin) || ruaLimpaAdmin.includes(ruaLimpaGps);
+            });
 
             if (zona) {
-                box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-green-100 text-green-700 text-center";
-                txt.innerText = `📍 ${ruaAtualGlobal.toUpperCase()}`;
-                sel.innerHTML = `<option value="${zona.preco}">${zona.setor} (R$ ${zona.preco.toFixed(2)})</option>`;
+                box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-green-100 text-green-700 text-center border-green-300";
+                txt.innerHTML = `📍 ${rua.toUpperCase()}`;
+                sel.innerHTML = `<option value="${zona.preco}">${zona.setor} - R$ ${zona.preco.toFixed(2)}</option>`;
                 if(placa !== "SELECIONE") {
-                    btn.className = "w-full btn-zazul py-5 text-lg";
+                    btn.className = "w-full btn-zazul py-5 text-lg shadow-lg";
                     btn.innerText = "ESTACIONAR AGORA";
                     btn.classList.remove('opacity-50', 'pointer-events-none');
                 }
             } else {
                 box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center";
-                txt.innerText = `📍 FORA DE ÁREA (${ruaAtualGlobal.toUpperCase()})`;
-                btn.classList.add('opacity-50', 'pointer-events-none');
+                txt.innerHTML = `📍 ${rua.toUpperCase()} <br><span class="text-red-500 text-[10px]">FORA DA ÁREA AZUL</span>`;
+                sel.innerHTML = `<option value="">Indisponível</option>`;
+                btn.className = "w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none";
+                btn.innerText = "FORA DE ÁREA";
             }
         }
 
+        // --- VEÍCULOS ---
         window.salvarNovoVeiculo = async () => {
             const p = document.getElementById('input-placa').value.toUpperCase().trim();
             const m = document.getElementById('input-modelo').value.trim();
-            if (p.length < 7 || !m) return alert("Erro");
+            if (p.length < 7 || !m) return alert("Dados inválidos");
             await push(ref(db, `usuarios/${currentUser.uid}/veiculos`), { placa: p, modelo: m });
+            document.getElementById('input-placa').value = ""; document.getElementById('input-modelo').value = "";
         };
 
         function carregarVeiculos(uid) {
@@ -214,12 +234,13 @@
                 lista.innerHTML = "";
                 const dados = snap.val();
                 if (dados) Object.entries(dados).forEach(([id, v]) => {
-                    lista.innerHTML += `<div class="card-app flex justify-between items-center mb-2"><div><p class="font-black">${v.placa}</p></div><button onclick="window.selecionarPlaca('${v.placa}')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold">USAR</button></div>`;
+                    lista.innerHTML += `<div class="card-app flex justify-between items-center mb-2"><div><p class="font-black text-xl">${v.placa}</p><p class="text-xs text-gray-400 font-bold uppercase">${v.modelo}</p></div><button onclick="window.selecionarPlaca('${v.placa}')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold">USAR</button></div>`;
                 });
             });
         }
         window.selecionarPlaca = (p) => { document.getElementById('placa-view').innerText = p; window.mudarAba('aba-estacionar'); };
 
+        // --- VAGA E SALDO ---
         function monitorarUsuario(uid) {
             onValue(ref(db, `usuarios/${uid}`), (snap) => {
                 const d = snap.val();
@@ -243,9 +264,9 @@
             if (saldoLocal < vH) return alert("Saldo insuficiente!");
             await update(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), {
                 placa: document.getElementById('placa-view').innerText,
-                rua: ruaAtualGlobal,
+                rua: ruaDetectadaOficial,
                 inicio: Date.now(),
-                final: Date.now() + 3600000,
+                final: Date.now() + (parseInt(document.getElementById('tempo-select').value) * 3600000),
                 valorHora: vH
             });
         };
@@ -255,15 +276,14 @@
                 const v = snap.val(); if (!v) return;
                 const min = Math.max(1, Math.ceil((Date.now() - v.inicio) / 60000));
                 const tot = min * (v.valorHora / 60);
-                
                 if (confirm(`Encerrar? Custo: R$ ${tot.toFixed(2)}`)) {
-                    // SALVAR RECIBO
+                    const agora = new Date();
                     await push(ref(db, `usuarios/${currentUser.uid}/historico`), {
                         placa: v.placa,
                         rua: v.rua,
-                        entrada: new Date(v.inicio).toLocaleTimeString(),
-                        saida: new Date().toLocaleTimeString(),
-                        dia: new Date().toLocaleDateString(),
+                        entrada: new Date(v.inicio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                        saida: agora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                        dia: agora.toLocaleDateString(),
                         valor: tot
                     });
                     await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot });
@@ -272,28 +292,24 @@
             }, {onlyOnce: true});
         };
 
+        // --- RECIBOS ---
         function carregarRecibos(uid) {
             onValue(ref(db, `usuarios/${uid}/historico`), (snap) => {
                 const lista = document.getElementById('lista-recibos');
                 lista.innerHTML = "";
                 const dados = snap.val();
-                if (dados) {
-                    Object.values(dados).reverse().forEach(r => {
-                        lista.innerHTML += `
-                            <div class="card-app border-l-4 border-green-600">
-                                <div class="flex justify-between items-start">
-                                    <span class="text-[10px] font-black bg-gray-100 px-2 py-1 rounded text-gray-500">${r.dia}</span>
-                                    <span class="font-black text-green-700">R$ ${r.valor.toFixed(2)}</span>
-                                </div>
-                                <h4 class="font-black text-xl mt-1">${r.placa}</h4>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase">${r.rua}</p>
-                                <div class="flex gap-4 mt-2 text-[10px] font-bold">
-                                    <span>ENTRADA: ${r.entrada}</span>
-                                    <span>SAÍDA: ${r.saida}</span>
-                                </div>
-                            </div>`;
-                    });
-                }
+                if (!dados) return lista.innerHTML = '<p class="text-center text-gray-400 text-xs py-8">Nenhum recibo ainda.</p>';
+                Object.values(dados).reverse().forEach(r => {
+                    lista.innerHTML += `
+                        <div class="card-app border-l-4 border-green-600 space-y-2">
+                            <div class="flex justify-between font-black text-[10px] text-gray-400"><span>${r.dia}</span><span class="text-green-700 text-sm">R$ ${r.valor.toFixed(2)}</span></div>
+                            <div class="text-xl font-black">${r.placa}</div>
+                            <div class="text-[10px] font-bold text-gray-500 uppercase">${r.rua}</div>
+                            <div class="flex justify-between text-[9px] font-bold bg-gray-50 p-2 rounded-lg">
+                                <span>ENTRADA: ${r.entrada}</span><span>SAÍDA: ${r.saida}</span>
+                            </div>
+                        </div>`;
+                });
             });
         }
 
@@ -302,9 +318,9 @@
             timerCron = setInterval(() => {
                 const res = v.final - Date.now();
                 document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil((Date.now()-v.inicio)/60000)*(v.valorHora/60)).toFixed(2).replace('.',',')}`;
-                if(res <= 0) { document.getElementById('cronometro').innerText = "FIM"; return; }
-                const m = Math.floor((res%3600000)/60000), s = Math.floor((res%60000)/1000);
-                document.getElementById('cronometro').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                if(res <= 0) { document.getElementById('cronometro').innerText = "VENCIDO"; return; }
+                const h = Math.floor(res/3600000), m = Math.floor((res%3600000)/60000), s = Math.floor((res%60000)/1000);
+                document.getElementById('cronometro').innerText = `${h > 0 ? h + ':' : ''}${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             }, 1000);
         }
 
