@@ -35,8 +35,8 @@
             </div>
             <h2 class="text-2xl font-black zazul-text-green uppercase">Entrar no Sistema</h2>
             <div class="space-y-3">
-                <input type="email" id="login-email" placeholder="E-mail" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-green-600">
-                <input type="password" id="login-senha" placeholder="Senha" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-green-600">
+                <input type="email" id="login-email" placeholder="E-mail" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
+                <input type="password" id="login-senha" placeholder="Senha" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
                 <button onclick="window.fazerLogin()" class="w-full btn-zazul py-4 text-lg shadow-lg">Acessar Conta</button>
             </div>
         </div>
@@ -95,9 +95,12 @@
         <section id="aba-recarga" class="aba-content space-y-4">
             <h3 class="zazul-text-green font-black uppercase text-sm text-center tracking-wider">Selecione o Valor</h3>
             <div class="grid grid-cols-3 gap-3">
+                <button onclick="window.selVal(3, this)" class="btn-value shadow-sm">R$ 3</button>
                 <button onclick="window.selVal(5, this)" class="btn-value shadow-sm">R$ 5</button>
                 <button onclick="window.selVal(10, this)" class="btn-value shadow-sm">R$ 10</button>
                 <button onclick="window.selVal(20, this)" class="btn-value shadow-sm">R$ 20</button>
+                <button onclick="window.selVal(30, this)" class="btn-value shadow-sm">R$ 30</button>
+                <button onclick="window.selVal(50, this)" class="btn-value shadow-sm">R$ 50</button>
             </div>
             <button id="btn-gerar" onclick="window.gerarPixReal()" class="w-full btn-zazul py-5 opacity-50 shadow-md" disabled>Gerar PIX</button>
             
@@ -112,8 +115,8 @@
         <section id="aba-veiculos" class="aba-content space-y-4">
             <h3 class="zazul-text-green font-black uppercase text-sm px-1">Meus Veículos</h3>
             <div class="card-app space-y-4">
-                <input type="text" id="input-placa" placeholder="PLACA (ABC-1234)" class="w-full p-4 border-2 rounded-2xl font-black text-center text-2xl uppercase outline-none focus:border-green-600">
-                <input type="text" id="input-modelo" placeholder="MODELO (EX: KWID)" class="w-full p-4 border rounded-2xl text-sm font-semibold outline-none">
+                <input type="text" id="input-placa" placeholder="PLACA" class="w-full p-4 border-2 rounded-2xl font-black text-center text-2xl uppercase outline-none">
+                <input type="text" id="input-modelo" placeholder="MODELO" class="w-full p-4 border rounded-2xl text-sm font-semibold outline-none">
                 <button onclick="window.salvarNovoVeiculo()" class="w-full btn-zazul py-4">Salvar Carro</button>
             </div>
             <div id="lista-veiculos" class="space-y-3"></div>
@@ -144,28 +147,17 @@
         let currentUser = null; let saldoLocal = 0; let zonasAdmin = []; let timerCron = null; let ruaDetectadaOficial = "Rua Desconhecida"; let valSel = 0;
         let gpsAtivo = false;
 
-        // --- LÓGICA DE GPS E IDENTIFICAÇÃO DE RUA (CORRIGIDA) ---
         window.iniciarGps = () => {
             if (gpsAtivo || !navigator.geolocation) return;
             document.getElementById('txt-local').innerText = "📍 LOCALIZANDO RUA...";
-            
             navigator.geolocation.watchPosition((pos) => {
                 gpsAtivo = true;
-                const lat = pos.coords.latitude;
-                const lon = pos.coords.longitude;
-                
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18`, {
-                    headers: { 'Accept-Language': 'pt-BR' }
-                })
-                .then(r => r.json())
-                .then(data => {
-                    ruaDetectadaOficial = data.address.road || data.address.suburb || data.display_name.split(',')[0] || "Rua não identificada";
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=18`, { headers: { 'Accept-Language': 'pt-BR' } })
+                .then(r => r.json()).then(data => {
+                    ruaDetectadaOficial = data.address.road || data.address.suburb || data.display_name.split(',')[0] || "Rua Desconhecida";
                     processarLogicaRua(ruaDetectadaOficial);
-                })
-                .catch(() => { document.getElementById('txt-local').innerText = "📍 ERRO DE CONEXÃO GPS"; });
-            }, (err) => {
-                document.getElementById('txt-local').innerText = "📍 ATIVE O GPS DO CELULAR";
-            }, { enableHighAccuracy: true });
+                });
+            }, null, { enableHighAccuracy: true });
         };
 
         function processarLogicaRua(rua) {
@@ -174,101 +166,63 @@
             const sel = document.getElementById('zona-select');
             const btn = document.getElementById('btn-estacionar-main');
             const placa = document.getElementById('placa-view').innerText;
-
-            // Limpeza profunda para comparação (tira Rua, Avenida, acentos e espaços)
             const limpar = (t) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\b(rua|avenida|av|travessa|pç|praça|al)\b/g, "").replace(/\s+/g, "").trim();
             const ruaGpsLimpa = limpar(rua);
-            
-            const zona = zonasAdmin.find(z => {
-                const ruaBancoLimpa = limpar(z.rua);
-                return ruaGpsLimpa.includes(ruaBancoLimpa) || ruaBancoLimpa.includes(ruaGpsLimpa);
-            });
-
+            const zona = zonasAdmin.find(z => { const rb = limpar(z.rua); return ruaGpsLimpa.includes(rb) || rb.includes(ruaGpsLimpa); });
             if (zona) {
                 box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-green-100 text-green-700 text-center border-green-300";
                 txt.innerHTML = `📍 ${rua.toUpperCase()}`;
                 sel.innerHTML = `<option value="${zona.preco}">${zona.setor} - R$ ${zona.preco.toFixed(2)}</option>`;
-                if(placa !== "SELECIONE") {
-                    btn.className = "w-full btn-zazul py-5 text-lg shadow-lg";
-                    btn.innerText = "ESTACIONAR AGORA";
-                    btn.classList.remove('opacity-50', 'pointer-events-none');
-                }
+                if(placa !== "SELECIONE") { btn.className = "w-full btn-zazul py-5 text-lg shadow-lg"; btn.innerText = "ESTACIONAR AGORA"; btn.classList.remove('opacity-50', 'pointer-events-none'); }
             } else {
                 box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center";
                 txt.innerHTML = `📍 ${rua.toUpperCase()} <br><span class="text-red-500 text-[10px]">FORA DA ÁREA AZUL</span>`;
                 sel.innerHTML = `<option value="">Indisponível</option>`;
-                btn.className = "w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none";
-                btn.innerText = "FORA DE ÁREA";
+                btn.className = "w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none"; btn.innerText = "FORA DE ÁREA";
             }
         }
 
-        // --- AUTENTICAÇÃO E MONITORAMENTO ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                currentUser = user;
-                document.getElementById('tela-login').classList.add('hidden');
-                onValue(ref(db, 'configuracoes_zonas'), (snap) => {
-                    zonasAdmin = snap.val() ? Object.values(snap.val()) : [];
-                    window.iniciarGps();
-                });
-                monitorarUsuario(user.uid);
-                carregarVeiculos(user.uid);
-                carregarHistorico(user.uid);
-            } else {
-                document.getElementById('tela-login').classList.remove('hidden');
-            }
+                currentUser = user; document.getElementById('tela-login').classList.add('hidden');
+                onValue(ref(db, 'configuracoes_zonas'), (snap) => { zonasAdmin = snap.val() ? Object.values(snap.val()) : []; window.iniciarGps(); });
+                monitorarUsuario(user.uid); carregarVeiculos(user.uid); carregarHistorico(user.uid);
+            } else { document.getElementById('tela-login').classList.remove('hidden'); }
         });
 
         window.fazerLogin = () => {
-            const e = document.getElementById('login-email').value;
-            const s = document.getElementById('login-senha').value;
+            const e = document.getElementById('login-email').value; const s = document.getElementById('login-senha').value;
             signInWithEmailAndPassword(auth, e, s).catch(err => alert("Erro: " + err.message));
         };
-        window.fazerLogout = () => { if(confirm("Sair da conta?")) signOut(auth).then(() => location.reload()); };
+        window.fazerLogout = () => { if(confirm("Sair?")) signOut(auth).then(() => location.reload()); };
 
         function monitorarUsuario(uid) {
             onValue(ref(db, `usuarios/${uid}`), (snap) => {
                 const d = snap.val(); saldoLocal = d?.saldo || 0;
                 document.getElementById('saldo-display').innerText = `R$ ${saldoLocal.toFixed(2).replace('.',',')}`;
                 if (d?.vagaAtiva) {
-                    document.getElementById('form-estacionar').classList.add('hidden');
-                    document.getElementById('vaga-ativa-box').classList.remove('hidden');
-                    document.getElementById('placa-ativa-label').innerText = d.vagaAtiva.placa;
-                    iniciarCronometro(d.vagaAtiva);
+                    document.getElementById('form-estacionar').classList.add('hidden'); document.getElementById('vaga-ativa-box').classList.remove('hidden');
+                    document.getElementById('placa-ativa-label').innerText = d.vagaAtiva.placa; iniciarCronometro(d.vagaAtiva);
                 } else {
-                    document.getElementById('vaga-ativa-box').classList.add('hidden');
-                    document.getElementById('form-estacionar').classList.remove('hidden');
+                    document.getElementById('vaga-ativa-box').classList.add('hidden'); document.getElementById('form-estacionar').classList.remove('hidden');
                     clearInterval(timerCron);
                 }
             });
         }
 
-        // --- ESTACIONAMENTO ---
         window.ativarVaga = async () => {
             const vH = parseFloat(document.getElementById('zona-select').value);
             if (saldoLocal < vH) return alert("Saldo insuficiente!");
-            await update(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), {
-                placa: document.getElementById('placa-view').innerText,
-                rua: ruaDetectadaOficial,
-                inicio: Date.now(),
-                final: Date.now() + (parseInt(document.getElementById('tempo-select').value) * 3600000),
-                valorHora: vH
-            });
+            await update(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), { placa: document.getElementById('placa-view').innerText, rua: ruaDetectadaOficial, inicio: Date.now(), final: Date.now() + (parseInt(document.getElementById('tempo-select').value) * 3600000), valorHora: vH });
         };
 
         window.sairDaVaga = async () => {
             onValue(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), async (snap) => {
                 const v = snap.val(); if (!v) return;
-                const min = Math.max(1, Math.ceil((Date.now() - v.inicio) / 60000));
-                const tot = min * (v.valorHora / 60);
-                if (confirm(`Encerrar estacionamento? Custo total: R$ ${tot.toFixed(2)}`)) {
-                    await push(ref(db, `usuarios/${currentUser.uid}/historico`), {
-                        placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(),
-                        entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
-                        saida: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
-                    });
-                    await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot });
-                    await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
+                const tot = Math.max(1, Math.ceil((Date.now() - v.inicio) / 60000)) * (v.valorHora / 60);
+                if (confirm(`Encerrar? R$ ${tot.toFixed(2)}`)) {
+                    await push(ref(db, `usuarios/${currentUser.uid}/historico`), { placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(), entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), saida: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) });
+                    await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot }); await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
                 }
             }, {onlyOnce: true});
         };
@@ -276,20 +230,18 @@
         function iniciarCronometro(v) {
             clearInterval(timerCron);
             timerCron = setInterval(() => {
-                const agora = Date.now();
-                const res = v.final - agora;
-                document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil((agora-v.inicio)/60000)*(v.valorHora/60)).toFixed(2).replace('.',',')}`;
-                if(res <= 0) { document.getElementById('cronometro').innerText = "ENCERRADO"; return; }
+                const res = v.final - Date.now();
+                document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil((Date.now()-v.inicio)/60000)*(v.valorHora/60)).toFixed(2).replace('.',',')}`;
+                if(res <= 0) { document.getElementById('cronometro').innerText = "FIM"; return; }
                 const m = Math.floor((res%3600000)/60000), s = Math.floor((res%60000)/1000);
                 document.getElementById('cronometro').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             }, 1000);
         }
 
-        // --- VEÍCULOS E RECARGA ---
         window.salvarNovoVeiculo = async () => {
             const p = document.getElementById('input-placa').value.toUpperCase().trim();
             const m = document.getElementById('input-modelo').value.toUpperCase().trim();
-            if (p.length < 7 || !m) return alert("Placa ou modelo inválido.");
+            if (p.length < 7 || !m) return alert("Erro nos dados.");
             await push(ref(db, `usuarios/${currentUser.uid}/veiculos`), { placa: p, modelo: m });
             document.getElementById('input-placa').value = ""; document.getElementById('input-modelo').value = "";
         };
@@ -318,10 +270,10 @@
                 document.getElementById('pix-code').value = d.qr_code;
                 document.getElementById('pix-area').classList.remove('hidden');
                 b.innerText = "PIX GERADO";
-            } catch (e) { alert("Erro ao gerar PIX"); b.innerText = "Gerar PIX"; }
+            } catch (e) { alert("Erro PIX"); b.innerText = "Gerar PIX"; }
         };
 
-        window.copiarPix = () => { document.getElementById('pix-code').select(); document.execCommand('copy'); alert("Código PIX copiado!"); };
+        window.copiarPix = () => { document.getElementById('pix-code').select(); document.execCommand('copy'); alert("Copiado!"); };
 
         function carregarHistorico(uid) {
             onValue(ref(db, `usuarios/${uid}/historico`), (snap) => {
@@ -336,8 +288,7 @@
             document.querySelectorAll('.aba-content').forEach(a => a.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             document.getElementById(id).classList.add('active'); 
-            if(b) b.classList.add('active');
-            else if(id === 'aba-estacionar') document.getElementById('btn-nav-estacionar').classList.add('active');
+            if(b) b.classList.add('active'); else if(id === 'aba-estacionar') document.getElementById('btn-nav-estacionar').classList.add('active');
             window.iniciarGps();
         };
     </script>
