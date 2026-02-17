@@ -52,6 +52,7 @@
             <div class="card-app text-center py-6">
                 <p class="text-gray-500 font-bold text-sm uppercase">Saldo Disponível</p>
                 <h2 class="text-4xl font-black text-black my-2" id="saldo-display">R$ 0,00</h2>
+                <button onclick="window.mudarAba('aba-pix')" class="mt-2 text-xs font-black text-green-700 border border-green-200 px-4 py-2 rounded-full bg-green-50 uppercase">＋ Adicionar Crédito</button>
             </div>
 
             <div id="form-estacionar" class="space-y-4">
@@ -66,7 +67,7 @@
 
                 <div class="grid grid-cols-2 gap-3">
                     <select id="zona-select" class="w-full p-4 border rounded-2xl font-bold text-sm bg-white border-gray-200">
-                        <option value="">Aguardando Rua...</option>
+                        <option value="">Aguardando...</option>
                     </select>
                     <select id="tempo-select" class="w-full p-4 border rounded-2xl font-bold text-sm bg-white border-gray-200">
                         <option value="1">1 Hora</option>
@@ -86,6 +87,23 @@
                     </div>
                 </div>
                 <button onclick="window.sairDaVaga()" class="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase">Encerrar Vaga</button>
+            </div>
+        </section>
+
+        <section id="aba-pix" class="aba-content space-y-4">
+            <h3 class="zazul-text-green font-black text-sm px-1">ADICIONAR CRÉDITO</h3>
+            <div class="card-app text-center space-y-4">
+                <p class="text-gray-500 text-xs font-bold uppercase">Pagamento via PIX</p>
+                <div class="bg-gray-100 w-48 h-48 mx-auto rounded-2xl flex items-center justify-center border-2 border-dashed">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=COLOQUE_SUA_CHAVE_AQUI" alt="QR PIX" id="pix-qr">
+                </div>
+                <div class="space-y-2">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">Chave PIX Copia e Cola</p>
+                    <input type="text" id="pix-chave" value="suachavepix@aqui.com" readonly class="w-full p-3 border rounded-xl text-center text-xs font-mono bg-gray-50">
+                    <button onclick="window.copiarPix()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-xs uppercase">Copiar Chave</button>
+                </div>
+                <p class="text-[10px] text-red-500 font-bold leading-tight">Após o pagamento, o saldo será liberado em até 5 minutos pela nossa central.</p>
+                <button onclick="window.mudarAba('aba-estacionar')" class="text-gray-400 font-bold text-[10px] uppercase underline">Voltar</button>
             </div>
         </section>
 
@@ -135,7 +153,6 @@
         let timerCron = null;
         let ruaDetectadaOficial = "Não identificada";
 
-        // --- LOGIN ---
         window.fazerLogin = () => {
             const e = document.getElementById('login-email').value;
             const s = document.getElementById('login-senha').value;
@@ -156,7 +173,7 @@
             }
         });
 
-        // --- GPS INTELIGENTE ---
+        // --- GPS ---
         function carregarZonasAdmin() {
             onValue(ref(db, 'configuracoes_zonas'), (snap) => {
                 zonasAdmin = snap.val() ? Object.values(snap.val()) : [];
@@ -169,23 +186,12 @@
             navigator.geolocation.watchPosition(async (pos) => {
                 const { latitude, longitude } = pos.coords;
                 try {
-                    // API Nominatim com User-Agent para evitar bloqueio
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
-                        headers: { 'Accept-Language': 'pt-BR' }
-                    });
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, { headers: { 'Accept-Language': 'pt-BR' } });
                     const data = await res.json();
                     ruaDetectadaOficial = data.address.road || data.address.suburb || "Rua Desconhecida";
                     processarLogicaRua(ruaDetectadaOficial);
-                } catch(e) { 
-                    console.error("GPS Error:", e);
-                    document.getElementById('txt-local').innerText = "📍 ERRO DE SINAL GPS";
-                }
-            }, null, { enableHighAccuracy: true, timeout: 5000 });
-        }
-
-        function limparTexto(t) {
-            return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                    .replace("rua", "").replace("avenida", "").replace("av.", "").trim();
+                } catch(e) {}
+            }, null, { enableHighAccuracy: true });
         }
 
         function processarLogicaRua(rua) {
@@ -194,36 +200,39 @@
             const sel = document.getElementById('zona-select');
             const btn = document.getElementById('btn-estacionar-main');
             const placa = document.getElementById('placa-view').innerText;
-
-            const ruaLimpaGps = limparTexto(rua);
-            const zona = zonasAdmin.find(z => {
-                const ruaLimpaAdmin = limparTexto(z.rua);
-                return ruaLimpaGps.includes(ruaLimpaAdmin) || ruaLimpaAdmin.includes(ruaLimpaGps);
-            });
+            const ruaLimpa = rua.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace("rua", "").trim();
+            
+            const zona = zonasAdmin.find(z => ruaLimpa.includes(z.rua.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace("rua", "").trim()));
 
             if (zona) {
-                box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-green-100 text-green-700 text-center border-green-300";
-                txt.innerHTML = `📍 ${rua.toUpperCase()}`;
-                sel.innerHTML = `<option value="${zona.preco}">${zona.setor} - R$ ${zona.preco.toFixed(2)}</option>`;
+                box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-green-100 text-green-700 text-center";
+                txt.innerText = `📍 ${rua.toUpperCase()}`;
+                sel.innerHTML = `<option value="${zona.preco}">${zona.setor}</option>`;
                 if(placa !== "SELECIONE") {
-                    btn.className = "w-full btn-zazul py-5 text-lg shadow-lg";
-                    btn.innerText = "ESTACIONAR AGORA";
+                    btn.className = "w-full btn-zazul py-5 text-lg"; btn.innerText = "ESTACIONAR AGORA";
                     btn.classList.remove('opacity-50', 'pointer-events-none');
                 }
             } else {
                 box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center";
-                txt.innerHTML = `📍 ${rua.toUpperCase()} <br><span class="text-red-500 text-[10px]">FORA DA ÁREA AZUL</span>`;
-                sel.innerHTML = `<option value="">Indisponível</option>`;
-                btn.className = "w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none";
-                btn.innerText = "FORA DE ÁREA";
+                txt.innerHTML = `📍 ${rua.toUpperCase()} <br><span class="text-red-500 text-[10px]">FORA DA ÁREA</span>`;
+                btn.classList.add('opacity-50', 'pointer-events-none');
             }
         }
 
-        // --- VEÍCULOS ---
+        // --- PIX ---
+        window.copiarPix = () => {
+            const copyText = document.getElementById("pix-chave");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+            alert("Chave PIX copiada!");
+        };
+
+        // --- CARROS ---
         window.salvarNovoVeiculo = async () => {
             const p = document.getElementById('input-placa').value.toUpperCase().trim();
             const m = document.getElementById('input-modelo').value.trim();
-            if (p.length < 7 || !m) return alert("Dados inválidos");
+            if (p.length < 7 || !m) return alert("Erro");
             await push(ref(db, `usuarios/${currentUser.uid}/veiculos`), { placa: p, modelo: m });
             document.getElementById('input-placa').value = ""; document.getElementById('input-modelo').value = "";
         };
@@ -234,17 +243,16 @@
                 lista.innerHTML = "";
                 const dados = snap.val();
                 if (dados) Object.entries(dados).forEach(([id, v]) => {
-                    lista.innerHTML += `<div class="card-app flex justify-between items-center mb-2"><div><p class="font-black text-xl">${v.placa}</p><p class="text-xs text-gray-400 font-bold uppercase">${v.modelo}</p></div><button onclick="window.selecionarPlaca('${v.placa}')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold">USAR</button></div>`;
+                    lista.innerHTML += `<div class="card-app flex justify-between items-center mb-2"><div><p class="font-black">${v.placa}</p></div><button onclick="window.selecionarPlaca('${v.placa}')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold">USAR</button></div>`;
                 });
             });
         }
         window.selecionarPlaca = (p) => { document.getElementById('placa-view').innerText = p; window.mudarAba('aba-estacionar'); };
 
-        // --- VAGA E SALDO ---
+        // --- VAGA E RECIBO ---
         function monitorarUsuario(uid) {
             onValue(ref(db, `usuarios/${uid}`), (snap) => {
-                const d = snap.val();
-                saldoLocal = d?.saldo || 0;
+                const d = snap.val(); saldoLocal = d?.saldo || 0;
                 document.getElementById('saldo-display').innerText = `R$ ${saldoLocal.toFixed(2).replace('.',',')}`;
                 if (d?.vagaAtiva) {
                     document.getElementById('form-estacionar').classList.add('hidden');
@@ -274,17 +282,11 @@
         window.sairDaVaga = async () => {
             onValue(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), async (snap) => {
                 const v = snap.val(); if (!v) return;
-                const min = Math.max(1, Math.ceil((Date.now() - v.inicio) / 60000));
-                const tot = min * (v.valorHora / 60);
-                if (confirm(`Encerrar? Custo: R$ ${tot.toFixed(2)}`)) {
-                    const agora = new Date();
+                const tot = Math.max(1, Math.ceil((Date.now() - v.inicio) / 60000)) * (v.valorHora / 60);
+                if (confirm(`Encerrar? R$ ${tot.toFixed(2)}`)) {
                     await push(ref(db, `usuarios/${currentUser.uid}/historico`), {
-                        placa: v.placa,
-                        rua: v.rua,
-                        entrada: new Date(v.inicio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                        saida: agora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                        dia: agora.toLocaleDateString(),
-                        valor: tot
+                        placa: v.placa, rua: v.rua, entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+                        saida: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), dia: new Date().toLocaleDateString(), valor: tot
                     });
                     await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot });
                     await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
@@ -292,23 +294,12 @@
             }, {onlyOnce: true});
         };
 
-        // --- RECIBOS ---
         function carregarRecibos(uid) {
             onValue(ref(db, `usuarios/${uid}/historico`), (snap) => {
-                const lista = document.getElementById('lista-recibos');
-                lista.innerHTML = "";
+                const lista = document.getElementById('lista-recibos'); lista.innerHTML = "";
                 const dados = snap.val();
-                if (!dados) return lista.innerHTML = '<p class="text-center text-gray-400 text-xs py-8">Nenhum recibo ainda.</p>';
-                Object.values(dados).reverse().forEach(r => {
-                    lista.innerHTML += `
-                        <div class="card-app border-l-4 border-green-600 space-y-2">
-                            <div class="flex justify-between font-black text-[10px] text-gray-400"><span>${r.dia}</span><span class="text-green-700 text-sm">R$ ${r.valor.toFixed(2)}</span></div>
-                            <div class="text-xl font-black">${r.placa}</div>
-                            <div class="text-[10px] font-bold text-gray-500 uppercase">${r.rua}</div>
-                            <div class="flex justify-between text-[9px] font-bold bg-gray-50 p-2 rounded-lg">
-                                <span>ENTRADA: ${r.entrada}</span><span>SAÍDA: ${r.saida}</span>
-                            </div>
-                        </div>`;
+                if (dados) Object.values(dados).reverse().forEach(r => {
+                    lista.innerHTML += `<div class="card-app border-l-4 border-green-600 mb-2"><div class="flex justify-between text-[10px] font-black"><span>${r.dia}</span><span class="text-green-700">R$ ${r.valor.toFixed(2)}</span></div><div class="text-lg font-black">${r.placa}</div><div class="text-[9px] font-bold text-gray-400 uppercase">${r.rua}</div></div>`;
                 });
             });
         }
@@ -319,8 +310,8 @@
                 const res = v.final - Date.now();
                 document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil((Date.now()-v.inicio)/60000)*(v.valorHora/60)).toFixed(2).replace('.',',')}`;
                 if(res <= 0) { document.getElementById('cronometro').innerText = "VENCIDO"; return; }
-                const h = Math.floor(res/3600000), m = Math.floor((res%3600000)/60000), s = Math.floor((res%60000)/1000);
-                document.getElementById('cronometro').innerText = `${h > 0 ? h + ':' : ''}${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                const m = Math.floor((res%3600000)/60000), s = Math.floor((res%60000)/1000);
+                document.getElementById('cronometro').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             }, 1000);
         }
 
@@ -329,8 +320,8 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             if(btn) btn.classList.add('active');
+            else if(id === 'aba-estacionar') document.getElementById('btn-nav-estacionar').classList.add('active');
         };
-
     </script>
 </body>
 </html>
