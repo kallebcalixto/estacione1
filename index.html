@@ -7,23 +7,99 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; padding-bottom: 90px; overflow-x: hidden; width: 100%; }
+        /* Ajustes Mobile-First */
+        * { 
+            -webkit-tap-highlight-color: transparent; 
+            box-sizing: border-box; 
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f3f4f6; 
+            padding-bottom: 90px; 
+            overflow-x: hidden;
+            width: 100%;
+        }
+
         .zazul-green { background-color: #15711b; }
         .zazul-text-green { color: #15711b; }
-        header { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding: 12px 0 20px 0; z-index: 50; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; border: none; background: none; flex: 1; }
+
+        header {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-bottom { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: white; 
+            border-top: 1px solid #e5e7eb; 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 12px 0 20px 0; 
+            z-index: 50; 
+        }
+
+        .nav-item { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #6b7280; 
+            text-transform: uppercase; 
+            border: none; 
+            background: none; 
+            flex: 1;
+        }
+
         .nav-item.active { color: #15711b; }
-        .btn-zazul { background-color: #15711b; color: white; border-radius: 1rem; font-weight: 700; text-transform: uppercase; transition: transform 0.1s; }
+
+        .btn-zazul { 
+            background-color: #15711b; 
+            color: white; 
+            border-radius: 1rem; 
+            font-weight: 700; 
+            text-transform: uppercase;
+            transition: transform 0.1s;
+        }
+        
         .btn-zazul:active { transform: scale(0.98); }
+
         .aba-content { display: none; width: 100%; animation: fadeIn 0.3s ease; }
         .aba-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .card-app { background: white; border-radius: 1.25rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; }
-        .loading-pulse { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        .hidden { display: none; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-app {
+            background: white;
+            border-radius: 1.25rem;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        input, select {
+            font-size: 16px !important;
+        }
+
+        .btn-value { 
+            border: 2px solid #e5e7eb; 
+            border-radius: 1rem; 
+            padding: 15px 10px; 
+            font-weight: 800; 
+            color: #475569; 
+            background: white;
+        }
+        .btn-value.active { 
+            border-color: #15711b; 
+            background-color: #f0fdf4; 
+            color: #15711b; 
+        }
     </style>
 </head>
 <body>
@@ -34,10 +110,13 @@
                 <span class="text-white text-4xl font-black">E</span>
             </div>
             <h2 class="text-2xl font-black zazul-text-green uppercase">Entrar no Sistema</h2>
+            
             <div class="space-y-3">
-                <button onclick="recuperarSenha()" class="text-xs font-bold text-gray-400 uppercase">Esqueci minha senha</button>
-                <input type="email" id="login-email" placeholder="E-mail" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
-                <input type="password" id="login-senha" placeholder="Senha" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
+                <button onclick="recuperarSenha()" class="text-xs font-bold text-gray-400 uppercase hover:text-green-700 transition-colors">
+                    Esqueci minha senha
+                </button>
+                <input type="email" id="login-email" placeholder="E-mail" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-green-600">
+                <input type="password" id="login-senha" placeholder="Senha" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-green-600">
                 <button onclick="fazerLogin()" class="w-full btn-zazul py-4 text-lg shadow-lg">Acessar Conta</button>
             </div>
         </div>
@@ -54,38 +133,31 @@
             <div class="card-app text-center py-6">
                 <p class="text-gray-500 font-bold text-sm uppercase">Saldo Disponível</p>
                 <h2 class="text-4xl font-black text-black my-2" id="saldo-display">R$ 0,00</h2>
-                <button onclick="mudarAba('aba-recarga', document.getElementById('btn-nav-estacionar'))" class="mt-2 text-blue-600 font-bold text-xs uppercase underline">Comprar Créditos</button>
+                <button onclick="mudarAba('aba-recarga', document.getElementById('btn-nav-estacionar'))" class="mt-4 btn-zazul px-8 py-4 w-full text-base">Comprar Créditos</button>
             </div>
 
             <div id="form-estacionar" class="space-y-4">
-                <div class="card-app bg-blue-50 border-2 border-dashed border-blue-200 text-center">
-                    <p class="text-[10px] font-black text-blue-500 uppercase mb-2">Localização</p>
-                    <button id="btn-gps" onclick="ativarGpsMarreta()" class="w-full bg-white border border-blue-400 text-blue-600 p-3 rounded-xl font-bold text-xs uppercase mb-2">
-                        <span id="label-gps">📍 Identificar Rua via GPS</span>
-                    </button>
-                    <select id="rua-manual" onchange="selecionarRuaManual(this.value)" class="w-full p-3 rounded-xl border font-bold text-xs uppercase bg-white">
-                        <option value="">Ou selecione a rua manualmente...</option>
-                        <option value="2.00|RUA XV DE NOVEMBRO">RUA XV DE NOVEMBRO - R$ 2,00/H</option>
-                        <option value="2.00|RUA FRANCISCO BUSATO">RUA FRANCISCO BUSATO - R$ 2,00/H</option>
-                        <option value="2.50|SETOR ESPECIAL">SETOR ESPECIAL - R$ 2,50/H</option>
-                    </select>
+                <div class="card-app bg-gray-50 border-dashed border-2 text-center">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">Veículo Selecionado</p>
+                    <h3 class="text-3xl font-black text-black tracking-tighter" id="placa-view">SELECIONE</h3>
                 </div>
 
-                <div class="card-app text-center">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase">Resumo da Ativação</p>
-                    <div class="py-2 border-b mb-2">
-                        <p id="placa-view" class="text-2xl font-black text-black tracking-tighter uppercase">SELECIONE O CARRO</p>
-                        <p id="nome-rua-final" class="text-xs font-bold text-blue-600 uppercase">Nenhuma rua selecionada</p>
-                    </div>
-                    <div class="grid grid-cols-1 gap-3">
-                        <select id="tempo-select" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-50">
-                            <option value="1">Permanecer 1 Hora</option>
-                            <option value="2">Permanecer 2 Horas</option>
-                        </select>
-                    </div>
-                    <input type="hidden" id="valor-hora-input" value="2.00">
-                    <button onclick="ativarVaga()" class="w-full btn-zazul mt-4 py-5 text-lg shadow-xl shadow-green-900/10">Ativar Estacionamento</button>
+                <button id="btn-gps" onclick="ativarGpsInteligente()" class="w-full bg-blue-50 border border-blue-200 text-blue-600 p-3 rounded-xl font-bold text-xs uppercase shadow-sm">
+                    📍 Identificar Rua Automaticamente
+                </button>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="zona-select" class="w-full p-4 border rounded-2xl font-bold text-sm bg-white shadow-sm border-gray-200">
+                        <option value="3.50">Setor 1 (R$ 3,50)</option>
+                        <option value="2.00">Setor 2 (R$ 2,00)</option>
+                    </select>
+                    <select id="tempo-select" class="w-full p-4 border rounded-2xl font-bold text-sm bg-white shadow-sm border-gray-200">
+                        <option value="1">1 Hora</option>
+                        <option value="2">2 Horas</option>
+                    </select>
                 </div>
+                <p id="rua-detectada" class="text-[10px] text-center font-bold text-blue-500 uppercase hidden"></p>
+                <button onclick="ativarVaga()" class="w-full btn-zazul py-5 text-lg shadow-xl shadow-green-900/10">Estacionar Agora</button>
             </div>
 
             <div id="vaga-ativa-box" class="hidden space-y-4">
@@ -102,7 +174,7 @@
         </section>
 
         <section id="aba-veiculos" class="aba-content space-y-4">
-            <h3 class="zazul-text-green font-black uppercase text-sm px-1 tracking-wider">Meus Veículos</h3>
+            <h3 class="zazul-text-green font-black uppercase text-sm tracking-wider px-1">Meus Veículos</h3>
             <div class="card-app space-y-4">
                 <input type="hidden" id="edit-id">
                 <input type="text" id="input-placa" placeholder="PLACA (ABC-1234)" class="w-full p-4 border-2 border-gray-100 rounded-2xl font-black uppercase text-center text-2xl focus:border-green-600 outline-none transition-all">
@@ -123,10 +195,12 @@
                 <button onclick="selVal(50, this)" class="btn-value shadow-sm">R$ 50</button>
             </div>
             <button id="btn-gerar" onclick="gerarPixReal()" class="w-full btn-zazul py-5 opacity-50 shadow-md" disabled>Gerar PIX</button>
+            
             <div id="pix-area" class="hidden card-app text-center space-y-4 border-2 border-dashed border-green-200">
                 <img id="qrcode-img" class="mx-auto w-56 h-56 rounded-xl">
                 <textarea id="pix-code" readonly class="w-full text-[10px] p-3 bg-gray-50 border rounded-xl font-mono text-gray-500 border-none"></textarea>
                 <button onclick="copiarPix()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold uppercase text-sm">Copiar Código PIX</button>
+                <button onclick="mudarAba('aba-estacionar')" class="w-full text-gray-400 font-bold uppercase text-xs py-2">Voltar</button>
             </div>
         </section>
 
@@ -160,50 +234,67 @@
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getDatabase, ref, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // SUA CONFIGURAÇÃO DO FIREBASE (MANTIDA DO ORIGINAL)
         const firebaseConfig = { apiKey: "AIzaSyDS2D6-KCvsJomst0m2qs3J93UEq3kWw1Q", authDomain: "estacione-6cfbf.firebaseapp.com", databaseURL: "https://estacione-6cfbf-default-rtdb.firebaseio.com", projectId: "estacione-6cfbf", appId: "1:490946040222:web:0071714b8e6d645459468f" };
         const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getDatabase(app);
         const API_URL = "https://estacione-backend.onrender.com";
 
         let currentUser = null; let saldoLocal = 0; let timer = null; let valSel = 0;
 
-        // --- FUNÇÕES DE GPS ADICIONADAS ---
-        window.ativarGpsMarreta = () => {
-            const label = document.getElementById('label-gps');
-            label.innerText = "LOCALIZANDO...";
-            navigator.geolocation.getCurrentPosition(
-                async (pos) => {
-                    const { latitude, longitude } = pos.coords;
-                    try {
-                        const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyB5vlwuDlqPFcl8fMVcHlmJs65Y6FRMXw0`);
-                        const d = await r.json();
-                        if(d.status === "OK") {
-                            const rua = d.results[0].address_components.find(c => c.types.includes("route"))?.long_name || "Rua Identificada";
-                            document.getElementById('nome-rua-final').innerText = rua.toUpperCase();
-                            label.innerText = "📍 LOCALIZADO!";
+        // --- LÓGICA DE GPS INTELIGENTE ---
+        window.ativarGpsInteligente = () => {
+            const btn = document.getElementById('btn-gps');
+            const ruaLabel = document.getElementById('rua-detectada');
+            btn.innerText = "LOCALIZANDO...";
+
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                try {
+                    const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${pos.coords.latitude},${pos.coords.longitude}&key=AIzaSyB5vlwuDlqPFcl8fMVcHlmJs65Y6FRMXw0`);
+                    const data = await response.json();
+                    
+                    if(data.status === "OK") {
+                        const rua = data.results[0].address_components.find(c => c.types.includes("route"))?.long_name || "";
+                        const ruaUpper = rua.toUpperCase();
+                        
+                        btn.innerText = "📍 LOCALIZADO!";
+                        ruaLabel.innerText = "Rua detectada: " + ruaUpper;
+                        ruaLabel.classList.remove('hidden');
+
+                        // Lógica de Preenchimento Automático baseada na sua lista de setores
+                        // Exemplo: Se estiver na XV de Novembro, marca Setor 1 automaticamente
+                        if(ruaUpper.includes("XV DE NOVEMBRO") || ruaUpper.includes("FRANCISCO BUSATO")) {
+                            document.getElementById('zona-select').value = "3.50";
+                        } else {
+                            document.getElementById('zona-select').value = "2.00";
                         }
-                    } catch(e) { gpsFalhou(); }
-                },
-                (err) => { gpsFalhou(); },
-                { enableHighAccuracy: true, timeout: 5000 }
-            );
+                    }
+                } catch (e) {
+                    btn.innerText = "ERRO AO BUSCAR RUA";
+                }
+            }, () => {
+                alert("Ative o GPS do seu celular para usar esta função.");
+                btn.innerText = "📍 GPS DESATIVADO";
+            });
         };
 
-        function gpsFalhou() {
-            alert("O Wix bloqueou o GPS. Por favor, escolha a rua manualmente na lista azul.");
-            document.getElementById('label-gps').innerText = "📍 GPS BLOQUEADO";
-            document.getElementById('rua-manual').focus();
-        }
-
-        window.selecionarRuaManual = (v) => {
-            if(!v) return;
-            const p = v.split('|');
-            document.getElementById('valor-hora-input').value = p[0];
-            document.getElementById('nome-rua-final').innerText = p[1];
-            document.getElementById('label-gps').innerText = "📍 SELEÇÃO MANUAL";
+        window.recuperarSenha = () => {
+            const email = prompt("Digite seu e-mail para receber o link de nova senha:");
+            if (email) {
+                sendPasswordResetEmail(auth, email)
+                    .then(() => alert("E-mail de recuperação enviado! Verifique sua caixa de entrada."))
+                    .catch(e => alert("Erro: " + e.message));
+            }
         };
 
-        // --- LÓGICA DE LOGIN E FIREBASE (MANTIDA) ---
+        window.fazerLogin = () => {
+            const email = document.getElementById('login-email').value;
+            const senha = document.getElementById('login-senha').value;
+            signInWithEmailAndPassword(auth, email, senha).catch(e => alert("Erro: " + e.message));
+        };
+
+        window.fazerLogout = () => {
+            if(confirm("Deseja sair da conta?")) signOut(auth);
+        };
+
         onAuthStateChanged(auth, (u) => {
             if (u) {
                 currentUser = u;
@@ -222,48 +313,186 @@
                         document.getElementById('form-estacionar').classList.remove('hidden');
                         clearInterval(timer);
                     }
-                    carregarVeiculos(u.uid); carregarHistorico(u.uid); carregarRecargas(u.uid);
+                    carregarVeiculos(u.uid); 
+                    carregarHistorico(u.uid);
+                    carregarRecargas(u.uid);
                 });
             } else {
-                currentUser = null; document.getElementById('tela-login').classList.remove('hidden'); 
+                currentUser = null;
+                document.getElementById('tela-login').classList.remove('hidden'); 
             }
         });
 
-        // TODAS AS OUTRAS FUNÇÕES (ATIVAR VAGA, SAIR DA VAGA, RECARGA) SÃO AS QUE VOCÊ JÁ TINHA
+        window.salvarNovoVeiculo = async () => {
+            const p = document.getElementById('input-placa').value.toUpperCase().trim();
+            const m = document.getElementById('input-modelo').value;
+            const eid = document.getElementById('edit-id').value;
+            if (p.length < 7) return alert("Placa inválida!");
+            if (eid) await update(ref(db, `usuarios/${currentUser.uid}/veiculos/${eid}`), { placa: p, modelo: m });
+            else await push(ref(db, `usuarios/${currentUser.uid}/veiculos`), { placa: p, modelo: m });
+            limparFormVeiculo();
+        };
+
+        window.limparFormVeiculo = () => {
+            document.getElementById('input-placa').value = ""; document.getElementById('input-modelo').value = "";
+            document.getElementById('edit-id').value = ""; document.getElementById('btn-salvar-veiculo').innerText = "Salvar Veículo";
+            document.getElementById('btn-cancelar-edit').classList.add('hidden');
+        };
+
+        function carregarVeiculos(uid) {
+            onValue(ref(db, `usuarios/${uid}/veiculos`), (snap) => {
+                const list = document.getElementById('lista-veiculos'); list.innerHTML = "";
+                const data = snap.val(); if (!data) return;
+                Object.entries(data).forEach(([id, v]) => {
+                    list.innerHTML += `<div class="card-app mb-3"><div class="flex justify-between items-center mb-3"><div><p class="font-black text-xl tracking-tight">${v.placa}</p><p class="text-[10px] text-gray-400 font-bold uppercase">${v.modelo}</p></div><button onclick="selecionarPlaca('${v.placa}')" class="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold uppercase">Usar</button></div><div class="flex gap-2"><button onclick="prepararEdicao('${id}','${v.placa}','${v.modelo}')" class="flex-1 text-[10px] font-bold py-2 border rounded-xl uppercase">Editar</button><button onclick="excluirVeiculo('${id}')" class="flex-1 text-[10px] font-bold py-2 border rounded-xl text-red-500 uppercase">Excluir</button></div></div>`;
+                });
+            });
+        }
+
+        window.prepararEdicao = (id, p, m) => {
+            document.getElementById('edit-id').value = id; document.getElementById('input-placa').value = p;
+            document.getElementById('input-modelo').value = m; document.getElementById('btn-salvar-veiculo').innerText = "Atualizar";
+            document.getElementById('btn-cancelar-edit').classList.remove('hidden'); window.scrollTo(0,0);
+        };
+
+        window.excluirVeiculo = async (id) => { if(confirm("Apagar veículo?")) await remove(ref(db, `usuarios/${currentUser.uid}/veiculos/${id}`)); };
+        window.selecionarPlaca = (p) => { document.getElementById('placa-view').innerText = p; mudarAba('aba-estacionar', document.getElementById('btn-nav-estacionar')); };
+
+        window.selVal = (v, b) => { 
+            valSel = v; document.querySelectorAll('.btn-value').forEach(btn => btn.classList.remove('active'));
+            b.classList.add('active'); document.getElementById('btn-gerar').disabled = false; document.getElementById('btn-gerar').classList.remove('opacity-50');
+        };
+
+        window.gerarPixReal = async () => {
+            const b = document.getElementById('btn-gerar'); b.innerText = "GERANDO...";
+            try {
+                const res = await fetch(`${API_URL}/gerar-pix`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ valor: valSel, email: currentUser.email, userId: currentUser.uid }) });
+                const d = await res.json();
+                document.getElementById('qrcode-img').src = `data:image/png;base64,${d.qr_code_base64}`;
+                document.getElementById('pix-code').value = d.qr_code;
+                document.getElementById('pix-area').classList.remove('hidden');
+                b.innerText = "GERAR OUTRO PIX";
+                await push(ref(db, `usuarios/${currentUser.uid}/recargas`), { valor: valSel, data: new Date().toLocaleDateString(), hora: new Date().toLocaleTimeString(), status: "Gerado" });
+            } catch (e) { alert("Erro ao gerar PIX"); b.innerText = "Gerar Código PIX"; }
+        };
+
+        window.copiarPix = () => { document.getElementById('pix-code').select(); document.execCommand('copy'); alert("Código copiado!"); };
+
         window.ativarVaga = async () => {
             const placa = document.getElementById('placa-view').innerText;
-            const rua = document.getElementById('nome-rua-final').innerText;
-            if (placa === "SELECIONE O CARRO") return alert("Escolha um veículo primeiro!");
-            if (rua === "Nenhuma rua selecionada") return alert("Identifique a rua primeiro!");
-            
-            const vH = parseFloat(document.getElementById('valor-hora-input').value);
+            if (placa === "SELECIONE") return alert("Escolha um veículo primeiro!");
+            const vH = parseFloat(document.getElementById('zona-select').value);
             const h = parseInt(document.getElementById('tempo-select').value);
-            if (saldoLocal < vH) return alert("Saldo insuficiente!");
+            if (saldoLocal < vH) return alert("Saldo insuficiente. Faça uma recarga!");
             
+            const horaEntrada = new Date().toLocaleTimeString();
             await update(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), { 
-                placa, rua, inicio: Date.now(), horaEntrada: new Date().toLocaleTimeString(),
-                final: Date.now() + (h * 3600000), valorHora: vH 
+                placa, 
+                inicio: Date.now(), 
+                horaEntrada: horaEntrada,
+                final: Date.now() + (h * 3600000), 
+                valorHora: vH 
             });
         };
 
-        // ... (resto das suas funções de histórico, veículos e recarga permanecem aqui embaixo) ...
-        window.fazerLogin = () => {
-            const e = document.getElementById('login-email').value;
-            const s = document.getElementById('login-senha').value;
-            signInWithEmailAndPassword(auth, e, s).catch(err => alert(err.message));
+        window.sairDaVaga = async () => {
+            onValue(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), async (snap) => {
+                const v = snap.val(); if (!v) return;
+                const fim = Date.now(); 
+                const horaSaida = new Date(fim).toLocaleTimeString();
+                const min = Math.max(1, Math.ceil((fim-v.inicio)/60000)); 
+                const tot = min*(v.valorHora/60);
+                
+                if (confirm(`Encerrar agora? Custo: R$ ${tot.toFixed(2)}`)) {
+                    await push(ref(db, `usuarios/${currentUser.uid}/historico`), { 
+                        placa: v.placa, 
+                        data: new Date().toLocaleDateString(), 
+                        entrada: v.horaEntrada || "--:--",
+                        saida: horaSaida,
+                        valor: tot 
+                    });
+                    await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot });
+                    await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
+                }
+            }, {onlyOnce: true});
         };
-        window.fazerLogout = () => { if(confirm("Sair?")) signOut(auth); };
-        window.salvarNovoVeiculo = async () => { /* Sua função original */ };
-        function carregarVeiculos(uid) { /* Sua função original */ }
-        window.selecionarPlaca = (p) => { document.getElementById('placa-view').innerText = p; mudarAba('aba-estacionar', document.getElementById('btn-nav-estacionar')); };
-        window.selVal = (v, b) => { valSel = v; document.querySelectorAll('.btn-value').forEach(btn => btn.classList.remove('active')); b.classList.add('active'); document.getElementById('btn-gerar').disabled = false; document.getElementById('btn-gerar').classList.remove('opacity-50'); };
-        window.gerarPixReal = async () => { /* Sua função original */ };
-        window.sairDaVaga = async () => { /* Sua função original */ };
-        function iniciarCronometro(v) { /* Sua função original */ }
-        function carregarHistorico(uid) { /* Sua função original */ }
-        function carregarRecargas(uid) { /* Sua função original */ }
-        window.mudarAba = (id, b) => { document.querySelectorAll('.aba-content').forEach(a => a.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); document.getElementById(id).classList.add('active'); if(b) b.classList.add('active'); else if(id === 'aba-estacionar') document.getElementById('btn-nav-estacionar').classList.add('active'); };
-        window.recuperarSenha = () => { const e = prompt("E-mail:"); if(e) sendPasswordResetEmail(auth, e).then(() => alert("Enviado!")); };
+
+        window.enviarRelatorioEmail = (tipo, info) => {
+            const assunto = encodeURIComponent(`Recibo Estacione Colombo - ${tipo}`);
+            const corpo = encodeURIComponent(`Detalhes do Registro:\n\n${info}\n\nEnviado via App Estacione Colombo.`);
+            window.location.href = `mailto:${currentUser.email}?subject=${assunto}&body=${corpo}`;
+        };
+
+        function iniciarCronometro(v) {
+            clearInterval(timer);
+            timer = setInterval(() => {
+                const ag = Date.now(); const res = v.final - ag;
+                document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil((ag-v.inicio)/60000)*(v.valorHora/60)).toFixed(2).replace('.',',')}`;
+                if (res <= 0) { document.getElementById('cronometro').innerText = "FIM"; return; }
+                const m = Math.floor((res%3600000)/60000); const s = Math.floor((res%60000)/1000);
+                document.getElementById('cronometro').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            }, 1000);
+        }
+
+        function carregarHistorico(uid) {
+            onValue(ref(db, `usuarios/${uid}/historico`), (snap) => {
+                const c = document.getElementById('lista-historico'); c.innerHTML = "";
+                const h = snap.val(); if (!h) return;
+                Object.values(h).reverse().forEach(l => {
+                    const textoEmail = `Placa: ${l.placa}\nDia: ${l.data}\nEntrada: ${l.entrada}\nSaída: ${l.saida}\nValor: R$ ${l.valor.toFixed(2)}`;
+                    c.innerHTML += `
+                        <div class="card-app space-y-3">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-green-700 font-bold">E</div>
+                                    <div>
+                                        <p class="font-black text-sm uppercase">${l.placa}</p>
+                                        <p class="text-[9px] text-gray-400 font-bold">${l.data}</p>
+                                    </div>
+                                </div>
+                                <span class="font-black text-red-600 text-sm">- R$ ${l.valor.toFixed(2).replace('.',',')}</span>
+                            </div>
+                            <div class="grid grid-cols-2 text-[10px] font-bold text-gray-500 uppercase border-t pt-2">
+                                <div>Entrada: <span class="text-black">${l.entrada || '--:--'}</span></div>
+                                <div>Saída: <span class="text-black">${l.saida}</span></div>
+                            </div>
+                            <button onclick="enviarRelatorioEmail('Uso de Vaga', '${textoEmail}')" class="w-full py-2 bg-gray-50 text-[10px] font-bold uppercase rounded-lg border hover:bg-gray-100">Enviar para meu E-mail</button>
+                        </div>`;
+                });
+            });
+        }
+
+        function carregarRecargas(uid) {
+            onValue(ref(db, `usuarios/${uid}/recargas`), (snap) => {
+                const c = document.getElementById('lista-recargas'); c.innerHTML = "";
+                const r = snap.val(); if (!r) return;
+                Object.values(r).reverse().forEach(l => {
+                    const textoEmail = `Tipo: Recarga PIX\nValor: R$ ${l.valor}\nData: ${l.data}\nHora: ${l.hora}`;
+                    c.innerHTML += `
+                        <div class="card-app space-y-3">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 font-bold">$</div>
+                                    <div>
+                                        <p class="font-black text-sm uppercase text-blue-600">Recarga Realizada</p>
+                                        <p class="text-[9px] text-gray-400 font-bold">${l.data} às ${l.hora}</p>
+                                    </div>
+                                </div>
+                                <span class="font-black text-green-600 text-sm">+ R$ ${parseFloat(l.valor).toFixed(2).replace('.',',')}</span>
+                            </div>
+                            <button onclick="enviarRelatorioEmail('Recarga PIX', '${textoEmail}')" class="w-full py-2 bg-gray-50 text-[10px] font-bold uppercase rounded-lg border hover:bg-gray-100">Enviar para meu E-mail</button>
+                        </div>`;
+                });
+            });
+        }
+
+        window.mudarAba = (id, b) => {
+            document.querySelectorAll('.aba-content').forEach(a => a.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(id).classList.add('active'); 
+            if(b) b.classList.add('active');
+            else if(id === 'aba-estacionar') document.getElementById('btn-nav-estacionar').classList.add('active');
+        };
     </script>
 </body>
 </html>
