@@ -2,286 +2,106 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ESTACIONE COLOMBO - Área Azul</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMIN - Cadastro Área Azul</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; padding-bottom: 100px; overflow-x: hidden; }
-        .zazul-green { background-color: #15711b; }
-        .zazul-text-green { color: #15711b; }
-        .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding: 12px 0 25px 0; z-index: 50; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; flex: 1; background: none; border: none; }
-        .nav-item.active { color: #15711b; }
-        .btn-zazul { background-color: #15711b; color: white; border-radius: 1rem; font-weight: 700; text-transform: uppercase; }
-        .aba-content { display: none; width: 100%; animation: fadeIn 0.3s ease; }
-        .aba-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
-        .card-app { background: white; border-radius: 1.25rem; padding: 1.25rem; border: 1px solid #e5e7eb; }
-        #modal-recibo { display:none; position:fixed; inset:0; z-index:200; background:white; padding: 20px; flex-direction: column; }
-    </style>
 </head>
-<body onclick="window.iniciarGps(); window.liberarAudio();">
+<body class="bg-gray-100 p-4">
+    <div class="max-w-2xl mx-auto space-y-6">
+        <header class="bg-blue-900 text-white p-6 rounded-2xl shadow-lg">
+            <h1 class="text-2xl font-bold uppercase">Gestão de Ruas</h1>
+            <p class="text-blue-200 text-sm font-bold">Configure Setores, Valores e Horas Máximas</p>
+        </header>
 
-    <audio id="som-alerta" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+            <h3 class="font-black text-gray-700 uppercase text-sm">Novo Local</h3>
+            
+            <div id="status-gps" class="text-center p-2 bg-gray-50 rounded-lg text-[10px] font-mono text-gray-500">
+                Aguardando comando...
+            </div>
 
-    <div id="modal-recibo">
-        <div id="area-impressao" class="border-2 border-black p-6 text-center">
-            <h2 class="font-black text-xl border-b-2 border-black pb-2">RECIBO ÁREA AZUL</h2>
-            <div class="text-left space-y-2 font-bold uppercase text-sm mt-4">
-                <p>Placa: <span id="rec-placa">---</span></p>
-                <p>Rua: <span id="rec-rua">---</span></p>
-                <p>Data: <span id="rec-data">---</span></p>
-                <p>Entrada: <span id="rec-entrada">---</span></p>
-                <p>Saída: <span id="rec-saida">---</span></p>
-                <p class="text-lg pt-2 border-t mt-2">Valor: <span id="rec-valor">R$ 0,00</span></p>
+            <div class="grid grid-cols-1 gap-4">
+                <input type="text" id="admin-rua" placeholder="Rua (Pelo GPS)" class="p-4 border rounded-xl font-bold bg-gray-50 outline-none" readonly>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="admin-setor" placeholder="Setor (Ex: A)" class="p-4 border rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" id="admin-preco" placeholder="Preço/Hora (Ex: 3.00)" step="0.01" class="p-4 border rounded-xl font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                    
+                    <select id="admin-horas-max" class="p-4 border rounded-xl font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="1">Limite: 1 Hora</option>
+                        <option value="2">Limite: 2 Horas</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="capturarLocalizacao()" class="bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 uppercase text-xs">
+                        📍 Localizar Rua
+                    </button>
+                    <button onclick="salvarZona()" id="btn-salvar" class="bg-green-600 text-white font-black py-4 rounded-xl hover:bg-green-700 uppercase text-xs opacity-50 pointer-events-none">
+                        Gravar no Banco
+                    </button>
+                </div>
             </div>
         </div>
-        <button onclick="document.getElementById('modal-recibo').style.display='none'" class="mt-4 w-full bg-gray-200 font-bold py-4 rounded-2xl uppercase">Fechar</button>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border">
+            <h3 class="font-black text-gray-700 uppercase text-sm mb-4">Ruas no Firebase:</h3>
+            <div id="lista-zonas-admin" class="space-y-2">
+                <p class="text-center text-gray-400 py-4 text-xs">Carregando dados...</p>
+            </div>
+        </div>
     </div>
-
-    <div id="tela-login" class="fixed inset-0 z-[100] bg-white flex flex-col p-6 items-center justify-center">
-        <div class="zazul-green w-16 h-16 rounded-2xl mb-4 flex items-center justify-center text-white text-3xl font-black">E</div>
-        <h2 class="text-xl font-black zazul-text-green uppercase mb-6">Acesso</h2>
-        <input type="email" id="login-email" placeholder="E-mail" class="w-full p-4 border rounded-2xl mb-3 font-bold">
-        <input type="password" id="login-senha" placeholder="Senha" class="w-full p-4 border rounded-2xl mb-4 font-bold">
-        <button onclick="window.fazerLogin()" class="w-full btn-zazul py-4 shadow-lg">Entrar</button>
-    </div>
-
-    <header class="zazul-green text-white p-4 text-center sticky top-0 z-40 shadow-md">
-        <h1 class="text-lg font-black tracking-widest uppercase">Estacione Colombo</h1>
-    </header>
-
-    <main class="max-w-md mx-auto p-4 space-y-4">
-        
-        <section id="aba-estacionar" class="aba-content active space-y-4">
-            <div class="card-app text-center">
-                <p class="text-gray-400 font-bold text-xs uppercase">Saldo</p>
-                <h2 class="text-3xl font-black" id="saldo-display">R$ 0,00</h2>
-            </div>
-
-            <div id="form-estacionar" class="space-y-4">
-                <div class="card-app bg-gray-50 border-dashed border-2 text-center" onclick="window.mudarAba('aba-veiculos')">
-                    <p class="text-[10px] font-bold text-gray-400">VEÍCULO</p>
-                    <h3 class="text-2xl font-black" id="placa-view">SELECIONE</h3>
-                </div>
-                <div id="gps-container" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center">
-                    <span id="txt-local">📍 LOCALIZANDO...</span>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <select id="zona-select" class="p-4 border rounded-2xl font-bold text-xs bg-white outline-none">
-                        <option value="">Rua...</option>
-                    </select>
-                    <select id="tempo-select" class="p-4 border rounded-2xl font-bold text-xs bg-white outline-none">
-                        <option value="">Tempo...</option>
-                    </select>
-                </div>
-                <button id="btn-estacionar-main" onclick="window.ativarVaga()" class="w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none shadow-xl">Ativar Vaga</button>
-            </div>
-
-            <div id="vaga-ativa-box" class="hidden space-y-4">
-                <div id="alerta-visual-container" class="hidden card-app bg-red-600 text-white text-center p-4 animate-pulse">
-                    <p id="alerta-mensagem" class="font-black uppercase text-sm"></p>
-                    <button onclick="window.pararAlertaSonoro()" class="mt-2 w-full bg-white text-red-600 py-2 rounded-xl font-black text-xs uppercase">Ciente</button>
-                </div>
-                <div class="card-app border-2 border-green-600 text-center">
-                    <h3 id="placa-ativa-label" class="text-3xl font-black mb-4">---</h3>
-                    <div class="grid grid-cols-2 border-t pt-4">
-                        <div><p class="text-[10px] text-gray-400 font-bold uppercase">Valor</p><span id="valor-correndo" class="font-black text-xl">R$ 0,00</span></div>
-                        <div><p class="text-[10px] text-gray-400 font-bold uppercase">Restante</p><span id="cronometro" class="font-black text-xl text-blue-600">00:00</span></div>
-                    </div>
-                </div>
-                <button onclick="window.sairDaVaga()" class="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase">Encerrar</button>
-            </div>
-        </section>
-
-        <section id="aba-veiculos" class="aba-content space-y-4">
-            <h3 class="zazul-text-green font-black uppercase text-sm">Meus Carros</h3>
-            <div class="card-app space-y-3">
-                <input type="text" id="input-placa" placeholder="PLACA" class="w-full p-4 border rounded-xl font-black text-center text-xl uppercase">
-                <button onclick="window.salvarNovoVeiculo()" class="w-full btn-zazul py-3">Salvar</button>
-            </div>
-            <div id="lista-veiculos"></div>
-        </section>
-
-        <section id="aba-historico" class="aba-content space-y-4"><div id="lista-historico"></div></section>
-        <section id="aba-recarga" class="aba-content text-center py-10">Use o Painel para Adicionar Saldo</section>
-
-    </main>
-
-    <nav class="nav-bottom">
-        <button onclick="window.mudarAba('aba-veiculos', this)" class="nav-item">🚗 Carros</button>
-        <button id="btn-nav-estacionar" onclick="window.mudarAba('aba-estacionar', this)" class="nav-item active">🏠 Início</button>
-        <button onclick="window.mudarAba('aba-historico', this)" class="nav-item">📄 Recibos</button>
-    </nav>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getDatabase, ref, onValue, update, remove, push, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = { apiKey: "AIzaSyDS2D6-KCvsJomst0m2qs3J93UEq3kWw1Q", authDomain: "estacione-6cfbf.firebaseapp.com", databaseURL: "https://estacione-6cfbf-default-rtdb.firebaseio.com", projectId: "estacione-6cfbf", appId: "1:490946040222:web:0071714b8e6d645459468f" };
-        const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getDatabase(app);
+        const app = initializeApp(firebaseConfig); const db = getDatabase(app); const dbRef = ref(db, 'configuracoes_zonas');
 
-        let currentUser = null; let saldoLocal = 0; let zonasAdmin = []; let timerCron = null; 
-        let ruaDetectadaOficial = ""; let somAlerta = document.getElementById('som-alerta'); let aviso15Feito = false;
-
-        window.liberarAudio = () => { somAlerta.play().then(() => { somAlerta.pause(); }).catch(()=>{}); };
-        window.pararAlertaSonoro = () => { somAlerta.pause(); somAlerta.loop = false; document.getElementById('alerta-visual-container').classList.add('hidden'); };
-
-        window.iniciarGps = () => {
-            if (!navigator.geolocation) return;
-            navigator.geolocation.watchPosition((pos) => {
+        window.capturarLocalizacao = () => {
+            const status = document.getElementById('status-gps');
+            status.innerText = "⏳ Localizando...";
+            navigator.geolocation.getCurrentPosition((pos) => {
                 fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
                 .then(r => r.json()).then(data => {
-                    ruaDetectadaOficial = data.address.road || "";
-                    processarRua(ruaDetectadaOficial);
-                });
-            }, null, { enableHighAccuracy: true });
+                    const rua = data.address.road || "Rua não identificada";
+                    document.getElementById('admin-rua').value = rua.trim();
+                    status.innerText = "✅ Rua Identificada!";
+                    document.getElementById('btn-salvar').classList.remove('opacity-50', 'pointer-events-none');
+                })
+                .catch(() => status.innerText = "❌ Erro GPS");
+            }, () => alert("Ative o GPS!"), { enableHighAccuracy: true });
         };
 
-        function processarRua(rua) {
-            const selZ = document.getElementById('zona-select');
-            const selT = document.getElementById('tempo-select');
-            const btn = document.getElementById('btn-estacionar-main');
-            const limpar = (t) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
-            
-            const zona = zonasAdmin.find(z => limpar(rua).includes(limpar(z.rua)));
+        window.salvarZona = async () => {
+            const rua = document.getElementById('admin-rua').value.trim();
+            const setor = document.getElementById('admin-setor').value.trim();
+            const preco = parseFloat(document.getElementById('admin-preco').value);
+            const horasMax = parseInt(document.getElementById('admin-horas-max').value);
+            if(!rua || !setor || isNaN(preco)) return alert("Preencha tudo!");
+            await push(dbRef, { rua, setor, preco, horasMaximas: horasMax, criadoEm: Date.now() });
+            alert("Salvo!");
+            location.reload();
+        };
 
-            if (zona) {
-                document.getElementById('txt-local').innerText = `📍 ${rua.toUpperCase()}`;
-                selZ.innerHTML = `<option value="${zona.preco}">${zona.setor} - R$ ${zona.preco.toFixed(2)}</option>`;
-                
-                // --- TRAVA DE TEMPO PELO SETOR ---
-                let maxH = zona.horasMaximas || 1;
-                let htmlT = `<option value="1">1 Hora</option>`;
-                if (maxH >= 2) htmlT += `<option value="2">2 Horas</option>`;
-                selT.innerHTML = htmlT;
-
-                if(document.getElementById('placa-view').innerText !== "SELECIONE") {
-                    btn.classList.remove('opacity-50', 'pointer-events-none');
-                }
-            } else {
-                document.getElementById('txt-local').innerText = "📍 FORA DE ÁREA AZUL";
-                btn.classList.add('opacity-50', 'pointer-events-none');
+        onValue(dbRef, (snap) => {
+            const lista = document.getElementById('lista-zonas-admin'); lista.innerHTML = "";
+            const dados = snap.val();
+            if(dados) {
+                Object.entries(dados).forEach(([id, zona]) => {
+                    lista.innerHTML += `
+                        <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100 mb-2">
+                            <div>
+                                <p class="font-black text-gray-800 text-sm">${zona.rua}</p>
+                                <p class="text-[10px] font-bold text-blue-600 uppercase">SETOR ${zona.setor} | R$ ${zona.preco.toFixed(2)}/h | Limite: ${zona.horasMaximas || 1}h</p>
+                            </div>
+                            <button onclick="removerZona('${id}')" class="text-red-500 font-bold text-[10px] border border-red-100 px-2 py-1 rounded-lg">APAGAR</button>
+                        </div>`;
+                });
             }
-        }
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user; document.getElementById('tela-login').classList.add('hidden');
-                onValue(ref(db, 'configuracoes_zonas'), (snap) => { zonasAdmin = snap.val() ? Object.values(snap.val()) : []; });
-                monitorarUsuario(user.uid); carregarVeiculos(user.uid);
-            } else { document.getElementById('tela-login').classList.remove('hidden'); }
         });
-
-        window.fazerLogin = () => {
-            signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-senha').value);
-        };
-
-        window.ativarVaga = async () => {
-            const horas = parseInt(document.getElementById('tempo-select').value);
-            const preco = parseFloat(document.getElementById('zona-select').value);
-            if (saldoLocal < preco) return alert("Saldo insuficiente!");
-            
-            // Verificação do bloqueio de 15 min
-            const histSnap = await get(ref(db, `usuarios/${currentUser.uid}/historico`));
-            const hist = histSnap.val();
-            if (hist) {
-                const ultima = Object.values(hist).reverse().find(h => h.rua === ruaDetectadaOficial);
-                if (ultima?.esgotouTempo && (Date.now() - ultima.timestampSaida < 900000)) {
-                    return alert("SETOR BLOQUEADO! AGUARDE 15 MINUTOS.");
-                }
-            }
-
-            aviso15Feito = false;
-            await update(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), {
-                placa: document.getElementById('placa-view').innerText,
-                rua: ruaDetectadaOficial, inicio: Date.now(),
-                final: Date.now() + (horas * 3600000), valorHora: preco,
-                tempoTotalMs: horas * 3600000
-            });
-        };
-
-        window.sairDaVaga = async () => {
-            onValue(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), async (snap) => {
-                const v = snap.val(); if (!v) return;
-                const tempo = Date.now() - v.inicio;
-                const tot = Math.max(1, Math.ceil(tempo / 60000)) * (v.valorHora / 60);
-                if (confirm(`Pagar R$ ${tot.toFixed(2)}?`)) {
-                    window.pararAlertaSonoro();
-                    await push(ref(db, `usuarios/${currentUser.uid}/historico`), {
-                        placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(),
-                        timestampSaida: Date.now(), esgotouTempo: tempo >= v.tempoTotalMs
-                    });
-                    await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot });
-                    await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
-                }
-            }, {onlyOnce: true});
-        };
-
-        function monitorarUsuario(uid) {
-            onValue(ref(db, `usuarios/${uid}`), (snap) => {
-                const d = snap.val(); saldoLocal = d?.saldo || 0;
-                document.getElementById('saldo-display').innerText = `R$ ${saldoLocal.toFixed(2)}`;
-                if (d?.vagaAtiva) {
-                    document.getElementById('form-estacionar').classList.add('hidden');
-                    document.getElementById('vaga-ativa-box').classList.remove('hidden');
-                    document.getElementById('placa-ativa-label').innerText = d.vagaAtiva.placa;
-                    clearInterval(timerCron);
-                    timerCron = setInterval(() => {
-                        const res = d.vagaAtiva.final - Date.now();
-                        const decorrido = Date.now() - d.vagaAtiva.inicio;
-                        document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil(decorrido/60000)*(d.vagaAtiva.valorHora/60)).toFixed(2)}`;
-                        
-                        if (res <= 900000 && res > 0 && !aviso15Feito) {
-                            aviso15Feito = true;
-                            document.getElementById('alerta-mensagem').innerText = "Faltam 15 Minutos!";
-                            document.getElementById('alerta-visual-container').classList.remove('hidden');
-                            somAlerta.play().catch(()=>{});
-                        }
-                        if (res <= 0) {
-                            document.getElementById('cronometro').innerText = "FIM";
-                            document.getElementById('alerta-mensagem').innerText = "SAIA DA VAGA AGORA!";
-                            document.getElementById('alerta-visual-container').classList.remove('hidden');
-                            somAlerta.loop = true; somAlerta.play().catch(()=>{});
-                        } else {
-                            const m = Math.floor(res/60000), s = Math.floor((res%60000)/1000);
-                            document.getElementById('cronometro').innerText = `${m}:${s.toString().padStart(2,'0')}`;
-                        }
-                    }, 1000);
-                } else {
-                    document.getElementById('vaga-ativa-box').classList.add('hidden');
-                    document.getElementById('form-estacionar').classList.remove('hidden');
-                    window.pararAlertaSonoro(); clearInterval(timerCron);
-                }
-            });
-        }
-
-        window.mudarAba = (id, b) => {
-            document.querySelectorAll('.aba-content').forEach(a => a.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            if(b) b.classList.add('active');
-        };
-
-        window.salvarNovoVeiculo = async () => {
-            const p = document.getElementById('input-placa').value.toUpperCase();
-            if(p.length < 7) return;
-            await push(ref(db, `usuarios/${currentUser.uid}/veiculos`), { placa: p });
-            document.getElementById('input-placa').value = "";
-        };
-
-        function carregarVeiculos(uid) {
-            onValue(ref(db, `usuarios/${uid}/veiculos`), (snap) => {
-                const list = document.getElementById('lista-veiculos'); list.innerHTML = "";
-                if(snap.val()) Object.values(snap.val()).forEach(v => {
-                    list.innerHTML += `<div class="card-app flex justify-between mb-2"><b>${v.placa}</b><button onclick="window.selecionarPlaca('${v.placa}')" class="text-blue-600 font-bold">USAR</button></div>`;
-                });
-            });
-        }
-        window.selecionarPlaca = (p) => { document.getElementById('placa-view').innerText = p; window.mudarAba('aba-estacionar'); };
+        window.removerZona = (id) => { if(confirm("Apagar?")) remove(ref(db, `configuracoes_zonas/${id}`)); };
     </script>
 </body>
 </html>
