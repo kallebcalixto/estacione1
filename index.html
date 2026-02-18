@@ -29,7 +29,7 @@
 <body onclick="window.iniciarGps()">
 
     <div id="tela-login" class="fixed inset-0 z-[100] bg-white flex flex-col p-6 items-center justify-center">
-        <div class="w-full max-w-md space-y-6 text-center">
+        <div id="login-container" class="w-full max-w-md space-y-6 text-center">
             <div class="zazul-green w-20 h-20 rounded-3xl mx-auto flex items-center justify-center shadow-lg">
                 <span class="text-white text-4xl font-black">E</span>
             </div>
@@ -38,6 +38,17 @@
                 <input type="email" id="login-email" placeholder="E-mail" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
                 <input type="password" id="login-senha" placeholder="Senha" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
                 <button onclick="window.fazerLogin()" class="w-full btn-zazul py-4 text-lg shadow-lg">Acessar Conta</button>
+                <button onclick="document.getElementById('login-container').classList.add('hidden'); document.getElementById('recuperar-container').classList.remove('hidden');" class="text-xs font-bold text-gray-400 uppercase mt-2">Esqueci minha senha</button>
+            </div>
+        </div>
+
+        <div id="recuperar-container" class="w-full max-w-md space-y-6 text-center hidden">
+            <h2 class="text-2xl font-black zazul-text-green uppercase">Recuperar Senha</h2>
+            <p class="text-gray-500 text-sm font-bold">Digite seu e-mail para receber o link de redefinição.</p>
+            <div class="space-y-3">
+                <input type="email" id="recuperar-email" placeholder="Seu e-mail cadastrado" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
+                <button onclick="window.enviarLinkRecuperacao()" class="w-full btn-zazul py-4 text-lg shadow-lg">Enviar Link</button>
+                <button onclick="document.getElementById('recuperar-container').classList.add('hidden'); document.getElementById('login-container').classList.remove('hidden');" class="text-xs font-bold text-gray-400 uppercase mt-2 block mx-auto">Voltar ao Login</button>
             </div>
         </div>
     </div>
@@ -137,7 +148,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getDatabase, ref, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = { apiKey: "AIzaSyDS2D6-KCvsJomst0m2qs3J93UEq3kWw1Q", authDomain: "estacione-6cfbf.firebaseapp.com", databaseURL: "https://estacione-6cfbf-default-rtdb.firebaseio.com", projectId: "estacione-6cfbf", appId: "1:490946040222:web:0071714b8e6d645459468f" };
@@ -147,14 +158,25 @@
         let currentUser = null; let saldoLocal = 0; let zonasAdmin = []; let timerCron = null; let ruaDetectadaOficial = "Rua Desconhecida"; let valSel = 0;
         let gpsIniciado = false; let watchId = null;
 
-        // --- GPS REFORÇADO (A ÚNICA PARTE ALTERADA) ---
+        // FUNÇÃO DE ENVIO DE EMAIL COM CAMPO SEPARADO
+        window.enviarLinkRecuperacao = () => {
+            const email = document.getElementById('recuperar-email').value;
+            if (!email) return alert("Digite o e-mail!");
+            sendPasswordResetEmail(auth, email)
+                .then(() => {
+                    alert("Link enviado para: " + email);
+                    document.getElementById('recuperar-container').classList.add('hidden');
+                    document.getElementById('login-container').classList.remove('hidden');
+                })
+                .catch(err => alert("Erro: " + err.message));
+        };
+
+        // --- GPS REFORÇADO ---
         window.iniciarGps = () => {
             if (gpsIniciado || !navigator.geolocation) return;
             gpsIniciado = true;
             document.getElementById('txt-local').innerText = "📍 LOCALIZANDO RUA...";
-            
             const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
-
             const success = (pos) => {
                 fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=18`, { headers: { 'Accept-Language': 'pt-BR' } })
                 .then(r => r.json()).then(data => {
@@ -162,13 +184,10 @@
                     processarLogicaRua(ruaDetectadaOficial);
                 });
             };
-
             const error = (err) => {
-                console.warn('Erro GPS:', err);
                 document.getElementById('txt-local').innerText = "📍 TOQUE PARA REATIVAR GPS";
-                gpsIniciado = false; // Permite tentar de novo ao clicar
+                gpsIniciado = false;
             };
-
             watchId = navigator.geolocation.watchPosition(success, error, options);
         };
 
@@ -193,8 +212,6 @@
                 btn.className = "w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none"; btn.innerText = "FORA DE ÁREA";
             }
         }
-
-        // --- FIM DO GPS (RESTO DO CÓDIGO IDÊNTICO) ---
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -310,4 +327,3 @@
     </script>
 </body>
 </html>
-
