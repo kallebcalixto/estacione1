@@ -38,6 +38,7 @@
                 <input type="email" id="login-email" placeholder="E-mail" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
                 <input type="password" id="login-senha" placeholder="Senha" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
                 <button onclick="window.fazerLogin()" class="w-full btn-zazul py-4 text-lg shadow-lg">Acessar Conta</button>
+                <button onclick="window.recuperarSenha()" class="text-xs font-bold text-gray-500 uppercase mt-2">Esqueci minha senha</button>
             </div>
         </div>
     </div>
@@ -137,7 +138,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getDatabase, ref, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = { apiKey: "AIzaSyDS2D6-KCvsJomst0m2qs3J93UEq3kWw1Q", authDomain: "estacione-6cfbf.firebaseapp.com", databaseURL: "https://estacione-6cfbf-default-rtdb.firebaseio.com", projectId: "estacione-6cfbf", appId: "1:490946040222:web:0071714b8e6d645459468f" };
@@ -147,7 +148,16 @@
         let currentUser = null; let saldoLocal = 0; let zonasAdmin = []; let timerCron = null; let ruaDetectadaOficial = "Rua Desconhecida"; let valSel = 0;
         let gpsIniciado = false; let watchId = null;
 
-        // --- GPS REFORÇADO (A ÚNICA PARTE ALTERADA) ---
+        // --- FUNÇÃO RECUPERAR SENHA ---
+        window.recuperarSenha = () => {
+            const email = document.getElementById('login-email').value;
+            if (!email) return alert("Por favor, digite seu e-mail no campo acima.");
+            sendPasswordResetEmail(auth, email)
+                .then(() => alert("E-mail de recuperação enviado! Verifique sua caixa de entrada."))
+                .catch(err => alert("Erro: " + err.message));
+        };
+
+        // --- GPS REFORÇADO ---
         window.iniciarGps = () => {
             if (gpsIniciado || !navigator.geolocation) return;
             gpsIniciado = true;
@@ -166,7 +176,7 @@
             const error = (err) => {
                 console.warn('Erro GPS:', err);
                 document.getElementById('txt-local').innerText = "📍 TOQUE PARA REATIVAR GPS";
-                gpsIniciado = false; // Permite tentar de novo ao clicar
+                gpsIniciado = false;
             };
 
             watchId = navigator.geolocation.watchPosition(success, error, options);
@@ -193,8 +203,6 @@
                 btn.className = "w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none"; btn.innerText = "FORA DE ÁREA";
             }
         }
-
-        // --- FIM DO GPS (RESTO DO CÓDIGO IDÊNTICO) ---
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
