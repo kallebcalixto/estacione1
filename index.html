@@ -24,18 +24,13 @@
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         .btn-value { border: 2px solid #e5e7eb; border-radius: 1rem; padding: 15px 10px; font-weight: 800; color: #475569; background: white; }
         .btn-value.active { border-color: #15711b; background-color: #f0fdf4; color: #15711b; }
-        
-        /* Estilo do Modal de Recibo */
         #modal-recibo { display:none; position:fixed; inset:0; z-index:200; background:white; padding: 20px; flex-direction: column; }
-        @media print {
-            body * { visibility: hidden; }
-            #area-impressao, #area-impressao * { visibility: visible; }
-            #area-impressao { position: absolute; left: 0; top: 0; width: 100%; }
-            .no-print { display: none !important; }
-        }
+        @media print { body * { visibility: hidden; } #area-impressao, #area-impressao * { visibility: visible; } #area-impressao { position: absolute; left: 0; top: 0; width: 100%; } .no-print { display: none !important; } }
     </style>
 </head>
-<body onclick="window.iniciarGps()">
+<body onclick="window.iniciarGps(); window.liberarAudio();">
+
+    <audio id="som-alerta" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
     <div id="modal-recibo">
         <div id="area-impressao" class="border-2 border-black p-6 space-y-4 text-center">
@@ -69,7 +64,6 @@
                 <button onclick="document.getElementById('login-container').classList.add('hidden'); document.getElementById('recuperar-container').classList.remove('hidden');" class="text-xs font-bold text-gray-400 uppercase mt-2">Esqueci minha senha</button>
             </div>
         </div>
-
         <div id="recuperar-container" class="w-full max-w-md space-y-6 text-center hidden">
             <h2 class="text-2xl font-black zazul-text-green uppercase">Recuperar Senha</h2>
             <p class="text-gray-500 text-sm font-bold">Digite seu e-mail para receber o link de redefinição.</p>
@@ -101,11 +95,9 @@
                     <p class="text-[10px] font-bold text-gray-400 uppercase">Veículo Selecionado</p>
                     <h3 class="text-3xl font-black text-black tracking-tighter" id="placa-view">SELECIONE</h3>
                 </div>
-
                 <div id="gps-container" onclick="window.iniciarGps()" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center transition-all duration-300">
                     <span id="txt-local" class="loading-pulse">📍 TOQUE PARA LOCALIZAR RUA</span>
                 </div>
-
                 <div class="grid grid-cols-2 gap-3">
                     <select id="zona-select" class="w-full p-4 border rounded-2xl font-bold text-sm bg-white border-gray-200 outline-none">
                         <option value="">Aguardando Rua...</option>
@@ -119,6 +111,12 @@
             </div>
 
             <div id="vaga-ativa-box" class="hidden space-y-4">
+                <div id="alerta-visual-container" class="hidden card-app bg-red-600 text-white text-center p-4 animate-pulse">
+                    <p class="font-black uppercase text-xs">Atenção!</p>
+                    <p id="alerta-mensagem" class="font-bold text-sm"></p>
+                    <button onclick="window.pararAlertaSonoro()" class="mt-2 w-full bg-white text-red-600 py-2 rounded-xl font-black uppercase text-xs">Estou Ciente</button>
+                </div>
+
                 <div class="card-app border-2 border-green-600 text-center bg-green-50/30">
                     <p class="text-green-600 font-black text-xs uppercase">Vaga Ativa</p>
                     <h3 id="placa-ativa-label" class="text-4xl font-black my-3">---</h3>
@@ -142,12 +140,10 @@
                 <button onclick="window.selVal(50, this)" class="btn-value shadow-sm">R$ 50</button>
             </div>
             <button id="btn-gerar" onclick="window.gerarPixReal()" class="w-full btn-zazul py-5 opacity-50 shadow-md" disabled>Gerar PIX</button>
-            
             <div id="pix-area" class="hidden card-app text-center space-y-4 border-2 border-dashed border-green-200">
                 <img id="qrcode-img" class="mx-auto w-56 h-56 rounded-xl">
                 <textarea id="pix-code" readonly class="w-full text-[10px] p-3 bg-gray-50 border rounded-xl font-mono text-gray-500"></textarea>
                 <button onclick="window.copiarPix()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold uppercase text-sm">Copiar Código PIX</button>
-                <button onclick="window.mudarAba('aba-estacionar')" class="w-full text-gray-400 font-bold uppercase text-xs">Voltar</button>
             </div>
         </section>
 
@@ -165,7 +161,6 @@
             <h3 class="zazul-text-green font-black uppercase text-sm px-1">Meus Recibos</h3>
             <div id="lista-historico" class="space-y-3"></div>
         </section>
-
     </main>
 
     <nav class="nav-bottom">
@@ -185,8 +180,18 @@
 
         let currentUser = null; let saldoLocal = 0; let zonasAdmin = []; let timerCron = null; let ruaDetectadaOficial = "Rua Desconhecida"; let valSel = 0;
         let gpsIniciado = false; let watchId = null;
+        let somAlerta = document.getElementById('som-alerta');
+        let aviso15Feito = false;
 
-        // FUNÇÃO PARA ABRIR O RECIBO PARA PRINT
+        // LIBERAR AUDIO NO PRIMEIRO CLIQUE (Regra do Navegador)
+        window.liberarAudio = () => { somAlerta.play().then(() => { somAlerta.pause(); somAlerta.currentTime = 0; }); };
+
+        window.pararAlertaSonoro = () => {
+            somAlerta.pause();
+            somAlerta.loop = false;
+            document.getElementById('alerta-visual-container').classList.add('hidden');
+        };
+
         window.abrirRecibo = (placa, rua, data, entrada, saida, valor) => {
             document.getElementById('rec-placa').innerText = placa;
             document.getElementById('rec-rua').innerText = rua;
@@ -256,15 +261,12 @@
         };
         window.fazerLogout = () => { if(confirm("Sair?")) signOut(auth).then(() => location.reload()); };
 
-        // --- LÓGICA DE ATIVAÇÃO MANTIDA ---
         window.ativarVaga = async () => {
             const vH = parseFloat(document.getElementById('zona-select').value);
             const horasContratadas = parseInt(document.getElementById('tempo-select').value);
             if (saldoLocal < vH) return alert("Saldo insuficiente!");
-
             const snap = await get(ref(db, `usuarios/${currentUser.uid}/historico`));
             const historico = snap.val();
-            
             if (historico) {
                 const agora = Date.now();
                 const ultimaVaga = Object.values(historico).reverse().find(h => h.rua === ruaDetectadaOficial);
@@ -276,7 +278,7 @@
                     }
                 }
             }
-
+            aviso15Feito = false;
             await update(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), { 
                 placa: document.getElementById('placa-view').innerText, rua: ruaDetectadaOficial, 
                 inicio: Date.now(), final: Date.now() + (horasContratadas * 3600000), 
@@ -291,8 +293,8 @@
                 const tempoGasto = agora - v.inicio;
                 const tot = Math.max(1, Math.ceil(tempoGasto / 60000)) * (v.valorHora / 60);
                 const esgotou = tempoGasto >= v.tempoTotalMs;
-
                 if (confirm(`Encerrar? R$ ${tot.toFixed(2)}`)) {
+                    window.pararAlertaSonoro();
                     await push(ref(db, `usuarios/${currentUser.uid}/historico`), { 
                         placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(), 
                         entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), 
@@ -314,6 +316,7 @@
                     document.getElementById('placa-ativa-label').innerText = d.vagaAtiva.placa; iniciarCronometro(d.vagaAtiva);
                 } else {
                     document.getElementById('vaga-ativa-box').classList.add('hidden'); document.getElementById('form-estacionar').classList.remove('hidden');
+                    window.pararAlertaSonoro();
                     clearInterval(timerCron);
                 }
             });
@@ -324,7 +327,24 @@
             timerCron = setInterval(() => {
                 const res = v.final - Date.now();
                 document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil((Date.now()-v.inicio)/60000)*(v.valorHora/60)).toFixed(2).replace('.',',')}`;
-                if(res <= 0) { document.getElementById('cronometro').innerText = "FIM"; return; }
+                
+                // --- LÓGICA DO SINAL SONORO ---
+                if (res <= 900000 && res > 0 && !aviso15Feito) { // 15 minutos
+                    aviso15Feito = true;
+                    document.getElementById('alerta-mensagem').innerText = "Faltam 15 minutos para seu tempo esgotar!";
+                    document.getElementById('alerta-visual-container').classList.remove('hidden');
+                    somAlerta.play();
+                }
+
+                if (res <= 0) { 
+                    document.getElementById('cronometro').innerText = "FIM"; 
+                    document.getElementById('alerta-mensagem').innerText = "SEU TEMPO ACABOU! SAIA DA VAGA IMEDIATAMENTE.";
+                    document.getElementById('alerta-visual-container').classList.remove('hidden');
+                    somAlerta.loop = true;
+                    somAlerta.play();
+                    return; 
+                }
+                
                 const m = Math.floor((res%3600000)/60000), s = Math.floor((res%60000)/1000);
                 document.getElementById('cronometro').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             }, 1000);
@@ -367,22 +387,12 @@
 
         window.copiarPix = () => { document.getElementById('pix-code').select(); document.execCommand('copy'); alert("Copiado!"); };
 
-        // --- ABA DE HISTÓRICO COM BOTÃO "ABRIR RECIBO" ---
         function carregarHistorico(uid) {
             onValue(ref(db, `usuarios/${uid}/historico`), (snap) => {
                 const list = document.getElementById('lista-historico'); list.innerHTML = "";
                 const data = snap.val(); if (data) {
                     Object.values(data).reverse().forEach(h => {
-                        list.innerHTML += `
-                        <div class="card-app border-l-4 border-green-600 mb-2">
-                            <div class="flex justify-between text-[10px] text-gray-400 font-bold">
-                                <span>${h.data}</span>
-                                <span class="text-green-700">R$ ${parseFloat(h.valor).toFixed(2).replace('.',',')}</span>
-                            </div>
-                            <div class="text-lg font-black">${h.placa}</div>
-                            <div class="text-[9px] font-bold text-gray-500 uppercase truncate">${h.rua}</div>
-                            <button onclick="window.abrirRecibo('${h.placa}', '${h.rua}', '${h.data}', '${h.entrada}', '${h.saida}', '${h.valor}')" class="w-full mt-2 bg-gray-100 text-[10px] font-black py-2 rounded-lg uppercase">Abrir Recibo</button>
-                        </div>`;
+                        list.innerHTML += `<div class="card-app border-l-4 border-green-600 mb-2"><div class="flex justify-between text-[10px] text-gray-400 font-bold"><span>${h.data}</span><span class="text-green-700">R$ ${parseFloat(h.valor).toFixed(2).replace('.',',')}</span></div><div class="text-lg font-black">${h.placa}</div><div class="text-[9px] font-bold text-gray-500 uppercase truncate">${h.rua}</div><button onclick="window.abrirRecibo('${h.placa}', '${h.rua}', '${h.data}', '${h.entrada}', '${h.saida}', '${h.valor}')" class="w-full mt-2 bg-gray-100 text-[10px] font-black py-2 rounded-lg uppercase">Abrir Recibo</button></div>`;
                     });
                 }
             });
