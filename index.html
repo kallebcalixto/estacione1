@@ -24,9 +24,37 @@
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         .btn-value { border: 2px solid #e5e7eb; border-radius: 1rem; padding: 15px 10px; font-weight: 800; color: #475569; background: white; }
         .btn-value.active { border-color: #15711b; background-color: #f0fdf4; color: #15711b; }
+        
+        /* Estilo do Modal de Recibo */
+        #modal-recibo { display:none; position:fixed; inset:0; z-index:200; background:white; padding: 20px; flex-direction: column; }
+        @media print {
+            body * { visibility: hidden; }
+            #area-impressao, #area-impressao * { visibility: visible; }
+            #area-impressao { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body onclick="window.iniciarGps()">
+
+    <div id="modal-recibo">
+        <div id="area-impressao" class="border-2 border-black p-6 space-y-4 text-center">
+            <h2 class="font-black text-xl border-b-2 border-black pb-2">COMPROVANTE ÁREA AZUL</h2>
+            <div class="text-left space-y-2 font-bold uppercase text-sm">
+                <p>Placa: <span id="rec-placa">---</span></p>
+                <p>Rua: <span id="rec-rua">---</span></p>
+                <p>Data: <span id="rec-data">---</span></p>
+                <p>Entrada: <span id="rec-entrada">---</span></p>
+                <p>Saída: <span id="rec-saida">---</span></p>
+                <p class="text-lg pt-2 border-t">Valor Pago: <span id="rec-valor">R$ 0,00</span></p>
+            </div>
+            <p class="text-[10px] text-gray-500">Estacione Colombo - Todos os direitos reservados</p>
+        </div>
+        <div class="flex gap-2 mt-6 no-print">
+            <button onclick="window.print()" class="flex-1 btn-zazul py-4">🖨️ Salvar/Print</button>
+            <button onclick="document.getElementById('modal-recibo').style.display='none'" class="flex-1 bg-gray-200 font-bold py-4 rounded-2xl uppercase">Fechar</button>
+        </div>
+    </div>
 
     <div id="tela-login" class="fixed inset-0 z-[100] bg-white flex flex-col p-6 items-center justify-center">
         <div id="login-container" class="w-full max-w-md space-y-6 text-center">
@@ -158,11 +186,22 @@
         let currentUser = null; let saldoLocal = 0; let zonasAdmin = []; let timerCron = null; let ruaDetectadaOficial = "Rua Desconhecida"; let valSel = 0;
         let gpsIniciado = false; let watchId = null;
 
+        // FUNÇÃO PARA ABRIR O RECIBO PARA PRINT
+        window.abrirRecibo = (placa, rua, data, entrada, saida, valor) => {
+            document.getElementById('rec-placa').innerText = placa;
+            document.getElementById('rec-rua').innerText = rua;
+            document.getElementById('rec-data').innerText = data;
+            document.getElementById('rec-entrada').innerText = entrada;
+            document.getElementById('rec-saida').innerText = saida;
+            document.getElementById('rec-valor').innerText = `R$ ${parseFloat(valor).toFixed(2).replace('.',',')}`;
+            document.getElementById('modal-recibo').style.display = 'flex';
+        };
+
         window.enviarLinkRecuperacao = () => {
             const email = document.getElementById('recuperar-email').value;
             if (!email) return alert("Digite o e-mail!");
             sendPasswordResetEmail(auth, email).then(() => {
-                alert("Link enviado para: " + email);
+                alert("Link enviado!");
                 document.getElementById('recuperar-container').classList.add('hidden');
                 document.getElementById('login-container').classList.remove('hidden');
             }).catch(err => alert("Erro: " + err.message));
@@ -171,16 +210,14 @@
         window.iniciarGps = () => {
             if (gpsIniciado || !navigator.geolocation) return;
             gpsIniciado = true;
-            document.getElementById('txt-local').innerText = "📍 LOCALIZANDO RUA...";
             const success = (pos) => {
                 fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=18`, { headers: { 'Accept-Language': 'pt-BR' } })
                 .then(r => r.json()).then(data => {
-                    ruaDetectadaOficial = data.address.road || data.address.suburb || data.display_name.split(',')[0] || "Rua Desconhecida";
+                    ruaDetectadaOficial = data.address.road || data.address.suburb || "Rua Desconhecida";
                     processarLogicaRua(ruaDetectadaOficial);
                 });
             };
-            const error = () => { gpsIniciado = false; };
-            watchId = navigator.geolocation.watchPosition(success, error, { enableHighAccuracy: true });
+            watchId = navigator.geolocation.watchPosition(success, () => {gpsIniciado=false;}, { enableHighAccuracy: true });
         };
 
         function processarLogicaRua(rua) {
@@ -219,7 +256,7 @@
         };
         window.fazerLogout = () => { if(confirm("Sair?")) signOut(auth).then(() => location.reload()); };
 
-        // --- LÓGICA DE ATIVAÇÃO COM BLOQUEIO DE 15 MIN ---
+        // --- LÓGICA DE ATIVAÇÃO MANTIDA ---
         window.ativarVaga = async () => {
             const vH = parseFloat(document.getElementById('zona-select').value);
             const horasContratadas = parseInt(document.getElementById('tempo-select').value);
@@ -231,24 +268,19 @@
             if (historico) {
                 const agora = Date.now();
                 const ultimaVaga = Object.values(historico).reverse().find(h => h.rua === ruaDetectadaOficial);
-                
-                // Só bloqueia se ele esgotou o tempo contratado anteriormente
                 if (ultimaVaga && ultimaVaga.esgotouTempo) {
                     const diff = agora - ultimaVaga.timestampSaida;
-                    if (diff < 900000) { // 15 minutos em ms
+                    if (diff < 900000) {
                         const falta = Math.ceil((900000 - diff) / 60000);
-                        return alert(`VOCÊ SÓ PODE ESTACIONAR DEPOIS DE 15 MINUTOS APÓS O TÉRMINO DAS 2 HORAS. AGUARDE ${falta} MINUTO(S).`);
+                        return alert(`BLOQUEIO DE 15 MINUTOS APÓS 2 HORAS. AGUARDE ${falta} MINUTO(S).`);
                     }
                 }
             }
 
             await update(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), { 
-                placa: document.getElementById('placa-view').innerText, 
-                rua: ruaDetectadaOficial, 
-                inicio: Date.now(), 
-                final: Date.now() + (horasContratadas * 3600000), 
-                valorHora: vH,
-                tempoTotalMs: horasContratadas * 3600000 
+                placa: document.getElementById('placa-view').innerText, rua: ruaDetectadaOficial, 
+                inicio: Date.now(), final: Date.now() + (horasContratadas * 3600000), 
+                valorHora: vH, tempoTotalMs: horasContratadas * 3600000 
             });
         };
 
@@ -258,8 +290,6 @@
                 const agora = Date.now();
                 const tempoGasto = agora - v.inicio;
                 const tot = Math.max(1, Math.ceil(tempoGasto / 60000)) * (v.valorHora / 60);
-                
-                // Verifica se ele esgotou o tempo (tempo gasto maior ou igual ao contratado)
                 const esgotou = tempoGasto >= v.tempoTotalMs;
 
                 if (confirm(`Encerrar? R$ ${tot.toFixed(2)}`)) {
@@ -267,8 +297,7 @@
                         placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(), 
                         entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), 
                         saida: new Date(agora).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
-                        timestampSaida: agora,
-                        esgotouTempo: esgotou 
+                        timestampSaida: agora, esgotouTempo: esgotou 
                     });
                     await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot }); 
                     await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
@@ -338,12 +367,22 @@
 
         window.copiarPix = () => { document.getElementById('pix-code').select(); document.execCommand('copy'); alert("Copiado!"); };
 
+        // --- ABA DE HISTÓRICO COM BOTÃO "ABRIR RECIBO" ---
         function carregarHistorico(uid) {
             onValue(ref(db, `usuarios/${uid}/historico`), (snap) => {
                 const list = document.getElementById('lista-historico'); list.innerHTML = "";
                 const data = snap.val(); if (data) {
                     Object.values(data).reverse().forEach(h => {
-                        list.innerHTML += `<div class="card-app border-l-4 border-green-600 mb-2"><div class="flex justify-between text-[10px] text-gray-400 font-bold"><span>${h.data || ''}</span><span class="text-green-700">R$ ${(h.valor || 0).toFixed(2).replace('.',',')}</span></div><div class="text-lg font-black">${h.placa || '---'}</div><div class="text-[9px] font-bold text-gray-500 uppercase">${h.rua || ''}</div></div>`;
+                        list.innerHTML += `
+                        <div class="card-app border-l-4 border-green-600 mb-2">
+                            <div class="flex justify-between text-[10px] text-gray-400 font-bold">
+                                <span>${h.data}</span>
+                                <span class="text-green-700">R$ ${parseFloat(h.valor).toFixed(2).replace('.',',')}</span>
+                            </div>
+                            <div class="text-lg font-black">${h.placa}</div>
+                            <div class="text-[9px] font-bold text-gray-500 uppercase truncate">${h.rua}</div>
+                            <button onclick="window.abrirRecibo('${h.placa}', '${h.rua}', '${h.data}', '${h.entrada}', '${h.saida}', '${h.valor}')" class="w-full mt-2 bg-gray-100 text-[10px] font-black py-2 rounded-lg uppercase">Abrir Recibo</button>
+                        </div>`;
                     });
                 }
             });
