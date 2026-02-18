@@ -62,7 +62,9 @@
     </div>
 
     <header class="zazul-green text-white p-4 flex justify-between items-center sticky top-0 z-40 shadow-md">
-        <div class="w-10"></div><h1 class="text-lg font-black tracking-widest uppercase">Estacione Colombo</h1><div class="w-10"></div>
+        <div class="w-10"></div> 
+        <h1 class="text-lg font-black tracking-widest uppercase">Estacione Colombo</h1>
+        <button onclick="window.fazerLogout()" class="text-[10px] font-bold border border-white/30 px-3 py-1 rounded-lg uppercase">Sair</button>
     </header>
 
     <main class="max-w-md mx-auto p-4 space-y-4">
@@ -79,21 +81,22 @@
                     <p class="text-[10px] font-bold text-gray-400 uppercase">Veículo Selecionado</p>
                     <h3 class="text-3xl font-black text-black tracking-tighter" id="placa-view">SELECIONE</h3>
                 </div>
-                <div id="gps-container" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center transition-all duration-300">
+                <div id="gps-container" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center">
                     <span id="txt-local" class="loading-pulse">📍 LOCALIZANDO RUA...</span>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <select id="zona-select" class="w-full p-4 border rounded-2xl font-bold text-xs bg-white border-gray-200 outline-none"><option value="">Aguardando...</option></select>
                     <select id="tempo-select" class="w-full p-4 border rounded-2xl font-bold text-xs bg-white border-gray-200 outline-none"><option value="">---</option></select>
                 </div>
-                <button id="btn-estacionar-main" onclick="window.ativarVaga()" class="w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none shadow-xl">ESTACIONAR</button>
+                <button id="btn-estacionar-main" onclick="window.ativarVaga()" class="w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none shadow-xl uppercase">Estacionar Agora</button>
             </div>
 
             <div id="vaga-ativa-box" class="hidden space-y-4">
                 <div id="alerta-visual-container" class="hidden card-app bg-red-600 text-white text-center p-4 animate-pulse">
                     <p id="alerta-mensagem" class="font-bold text-sm uppercase"></p>
-                    <button onclick="window.pararAlertaSonoro()" class="mt-2 w-full bg-white text-red-600 py-2 rounded-xl font-black uppercase text-xs">Ciente</button>
+                    <button onclick="window.pararAlertaSonoro()" class="mt-2 w-full bg-white text-red-600 py-2 rounded-xl font-black uppercase text-xs">Entendido</button>
                 </div>
+
                 <div class="card-app border-2 border-green-600 text-center bg-green-50/30">
                     <p class="text-green-600 font-black text-xs uppercase">Vaga Ativa</p>
                     <h3 id="placa-ativa-label" class="text-4xl font-black my-3">---</h3>
@@ -107,7 +110,7 @@
         </section>
 
         <section id="aba-recarga" class="aba-content space-y-4">
-            <h3 class="zazul-text-green font-black uppercase text-sm text-center tracking-wider">Selecione o Valor</h3>
+            <h3 class="zazul-text-green font-black uppercase text-sm text-center">Recarregar Saldo</h3>
             <div class="grid grid-cols-3 gap-3">
                 <button onclick="window.selVal(3, this)" class="btn-value">R$ 3</button>
                 <button onclick="window.selVal(5, this)" class="btn-value">R$ 5</button>
@@ -125,7 +128,7 @@
         </section>
 
         <section id="aba-veiculos" class="aba-content space-y-4">
-            <h3 class="zazul-text-green font-black uppercase text-sm">Meus Veículos</h3>
+            <h3 class="zazul-text-green font-black uppercase text-sm">Meus Carros</h3>
             <div class="card-app space-y-4">
                 <input type="text" id="input-placa" placeholder="PLACA" class="w-full p-4 border-2 rounded-2xl font-black text-center text-2xl uppercase outline-none">
                 <input type="text" id="input-modelo" placeholder="MODELO" class="w-full p-4 border rounded-2xl text-sm font-semibold outline-none">
@@ -158,13 +161,17 @@
         let currentUser = null; let saldoLocal = 0; let zonasAdmin = []; let timerCron = null; let ruaDetectadaOficial = ""; let valSel = 0;
         let somAlerta = document.getElementById('som-alerta'); let aviso15Feito = false;
 
+        // FUNÇÕES DE ÁUDIO E LOGIN
         window.liberarAudio = () => { somAlerta.play().then(() => { somAlerta.pause(); somAlerta.currentTime = 0; }).catch(()=>{}); };
         window.pararAlertaSonoro = () => { somAlerta.pause(); somAlerta.loop = false; document.getElementById('alerta-visual-container').classList.add('hidden'); };
+        window.fazerLogin = () => { signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-senha').value).catch(e => alert("Erro ao entrar")); };
+        window.fazerLogout = () => { if(confirm("Deseja sair da conta?")) signOut(auth).then(() => location.reload()); };
 
+        // GPS E LÓGICA DE ZONAS (HORAS DINÂMICAS)
         window.iniciarGps = () => {
             if (!navigator.geolocation) return;
             navigator.geolocation.watchPosition((pos) => {
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=18`, { headers: { 'Accept-Language': 'pt-BR' } })
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=18`)
                 .then(r => r.json()).then(data => {
                     ruaDetectadaOficial = data.address.road || "Rua Desconhecida";
                     processarLogicaRua(ruaDetectadaOficial);
@@ -181,17 +188,15 @@
 
             if (zona) {
                 document.getElementById('txt-local').innerHTML = `📍 ${rua.toUpperCase()}`;
-                document.getElementById('gps-container').className = "w-full p-4 border rounded-2xl font-bold text-sm bg-green-100 text-green-700 text-center border-green-300";
-                selZ.innerHTML = `<option value="${zona.preco}">${zona.setor} - R$ ${zona.preco.toFixed(2)}</option>`;
+                selZ.innerHTML = `<option value="${zona.preco}">${zona.setor} - R$ ${zona.preco.toFixed(2)}/h</option>`;
                 
-                // --- NOVO: MOSTRA SOMENTE O QUE FOI CADASTRADO NO ADMIN ---
+                // --- MOSTRA SÓ AS HORAS QUE O ADMIN DEFINIU ---
                 let maxH = zona.horasMaximas || 1;
                 let htmlT = `<option value="1">1 Hora</option>`;
                 if (maxH >= 2) htmlT += `<option value="2">2 Horas</option>`;
                 selT.innerHTML = htmlT;
 
                 if(document.getElementById('placa-view').innerText !== "SELECIONE") {
-                    btn.className = "w-full btn-zazul py-5 text-lg shadow-lg"; 
                     btn.classList.remove('opacity-50', 'pointer-events-none');
                 }
             } else {
@@ -205,11 +210,10 @@
                 currentUser = user; document.getElementById('tela-login').classList.add('hidden');
                 onValue(ref(db, 'configuracoes_zonas'), (snap) => { zonasAdmin = snap.val() ? Object.values(snap.val()) : []; window.iniciarGps(); });
                 monitorarUsuario(user.uid); carregarVeiculos(user.uid); carregarHistorico(user.uid);
-            }
+            } else { document.getElementById('tela-login').classList.remove('hidden'); }
         });
 
-        window.fazerLogin = () => { signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-senha').value); };
-
+        // VAGA E CRONÔMETRO
         window.ativarVaga = async () => {
             const vH = parseFloat(document.getElementById('zona-select').value);
             const horas = parseInt(document.getElementById('tempo-select').value);
@@ -220,7 +224,7 @@
             if (hist) {
                 const ultima = Object.values(hist).reverse().find(h => h.rua === ruaDetectadaOficial);
                 if (ultima?.esgotouTempo && (Date.now() - ultima.timestampSaida < 900000)) {
-                    return alert("LIMITE DO SETOR ATINGIDO. AGUARDE 15 MIN.");
+                    return alert("SETOR BLOQUEADO POR 15 MINUTOS!");
                 }
             }
             aviso15Feito = false;
@@ -263,12 +267,12 @@
                         const res = d.vagaAtiva.final - Date.now();
                         document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil((Date.now()-d.vagaAtiva.inicio)/60000)*(d.vagaAtiva.valorHora/60)).toFixed(2).replace('.',',')}`;
                         if (res <= 900000 && res > 0 && !aviso15Feito) {
-                            aviso15Feito = true; document.getElementById('alerta-mensagem').innerText = "Tempo quase acabando (15 min)!";
+                            aviso15Feito = true; document.getElementById('alerta-mensagem').innerText = "Tempo quase a acabar (15 min)!";
                             document.getElementById('alerta-visual-container').classList.remove('hidden'); somAlerta.play().catch(()=>{});
                         }
                         if (res <= 0) {
                             document.getElementById('cronometro').innerText = "FIM";
-                            document.getElementById('alerta-mensagem').innerText = "TEMPO ESGOTADO! SAIA DA VAGA.";
+                            document.getElementById('alerta-mensagem').innerText = "TEMPO ESGOTADO!";
                             document.getElementById('alerta-visual-container').classList.remove('hidden'); somAlerta.loop = true; somAlerta.play().catch(()=>{});
                         } else {
                             const m = Math.floor(res/60000), s = Math.floor((res%60000)/1000);
@@ -283,33 +287,35 @@
             });
         }
 
+        // PIX E NAVEGAÇÃO
         window.mudarAba = (id, b) => {
             document.querySelectorAll('.aba-content').forEach(a => a.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             if(b) b.classList.add('active'); else if(id === 'aba-estacionar') document.getElementById('btn-nav-estacionar').classList.add('active');
-            window.iniciarGps();
         };
 
         window.selVal = (v, b) => { valSel = v; document.querySelectorAll('.btn-value').forEach(btn => btn.classList.remove('active')); b.classList.add('active'); document.getElementById('btn-gerar').disabled = false; document.getElementById('btn-gerar').classList.remove('opacity-50'); };
         window.gerarPixReal = async () => { 
-            const b = document.getElementById('btn-gerar'); b.innerText = "PROCESSANDO...";
+            const b = document.getElementById('btn-gerar'); b.innerText = "GERANDO...";
             try {
                 const res = await fetch(`${API_URL}/gerar-pix`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ valor: valSel, email: currentUser.email, userId: currentUser.uid }) });
                 const d = await res.json();
                 document.getElementById('qrcode-img').src = `data:image/png;base64,${d.qr_code_base64}`;
                 document.getElementById('pix-code').value = d.qr_code;
                 document.getElementById('pix-area').classList.remove('hidden');
-                b.innerText = "PIX GERADO";
-            } catch (e) { alert("Erro PIX"); }
+                b.innerText = "PIX PRONTO";
+            } catch (e) { b.innerText = "ERRO AO GERAR"; }
         };
-        window.copiarPix = () => { document.getElementById('pix-code').select(); document.execCommand('copy'); alert("Copiado!"); };
+
+        window.copiarPix = () => { document.getElementById('pix-code').select(); document.execCommand('copy'); alert("Código Copiado!"); };
         
+        // VEÍCULOS E HISTÓRICO
         window.salvarNovoVeiculo = async () => {
             const p = document.getElementById('input-placa').value.toUpperCase().trim();
-            if(p.length < 7) return;
+            if(p.length < 7) return alert("Placa Inválida");
             await push(ref(db, `usuarios/${currentUser.uid}/veiculos`), { placa: p, modelo: document.getElementById('input-modelo').value });
-            location.reload();
+            document.getElementById('input-placa').value = ""; document.getElementById('input-modelo').value = "";
         };
 
         function carregarVeiculos(uid) {
