@@ -149,7 +149,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getDatabase, ref, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, update, remove, push, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = { apiKey: "AIzaSyDS2D6-KCvsJomst0m2qs3J93UEq3kWw1Q", authDomain: "estacione-6cfbf.firebaseapp.com", databaseURL: "https://estacione-6cfbf-default-rtdb.firebaseio.com", projectId: "estacione-6cfbf", appId: "1:490946040222:web:0071714b8e6d645459468f" };
         const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getDatabase(app);
@@ -158,20 +158,16 @@
         let currentUser = null; let saldoLocal = 0; let zonasAdmin = []; let timerCron = null; let ruaDetectadaOficial = "Rua Desconhecida"; let valSel = 0;
         let gpsIniciado = false; let watchId = null;
 
-        // FUNÇÃO DE ENVIO DE EMAIL COM CAMPO SEPARADO
         window.enviarLinkRecuperacao = () => {
             const email = document.getElementById('recuperar-email').value;
             if (!email) return alert("Digite o e-mail!");
-            sendPasswordResetEmail(auth, email)
-                .then(() => {
-                    alert("Link enviado para: " + email);
-                    document.getElementById('recuperar-container').classList.add('hidden');
-                    document.getElementById('login-container').classList.remove('hidden');
-                })
-                .catch(err => alert("Erro: " + err.message));
+            sendPasswordResetEmail(auth, email).then(() => {
+                alert("Link enviado para: " + email);
+                document.getElementById('recuperar-container').classList.add('hidden');
+                document.getElementById('login-container').classList.remove('hidden');
+            }).catch(err => alert("Erro: " + err.message));
         };
 
-        // --- GPS REFORÇADO ---
         window.iniciarGps = () => {
             if (gpsIniciado || !navigator.geolocation) return;
             gpsIniciado = true;
@@ -184,7 +180,7 @@
                     processarLogicaRua(ruaDetectadaOficial);
                 });
             };
-            const error = (err) => {
+            const error = () => {
                 document.getElementById('txt-local').innerText = "📍 TOQUE PARA REATIVAR GPS";
                 gpsIniciado = false;
             };
@@ -227,6 +223,62 @@
         };
         window.fazerLogout = () => { if(confirm("Sair?")) signOut(auth).then(() => location.reload()); };
 
+        // --- LÓGICA DE BLOQUEIO DE 15 MINUTOS (NOVA REGRA) ---
+        window.ativarVaga = async () => {
+            const vH = parseFloat(document.getElementById('zona-select').value);
+            if (saldoLocal < vH) return alert("Saldo insuficiente!");
+
+            // Verificar histórico para bloqueio de 15 minutos na mesma rua
+            const histRef = ref(db, `usuarios/${currentUser.uid}/historico`);
+            const snap = await get(histRef);
+            const historico = snap.val();
+            
+            if (historico) {
+                const agora = Date.now();
+                const tempoBloqueioMs = 15 * 60000; // 15 minutos
+                
+                // Procurar último registro na mesma rua
+                const ultimaVagaNessaRua = Object.values(historico).reverse().find(h => h.rua === ruaDetectadaOficial);
+                
+                if (ultimaVagaNessaRua && ultimaVagaNessaRua.timestampSaida) {
+                    const tempoPassado = agora - ultimaVagaNessaRua.timestampSaida;
+                    if (tempoPassado < tempoBloqueioMs) {
+                        const falta = Math.ceil((tempoBloqueioMs - tempoPassado) / 60000);
+                        return alert(`BLOQUEADO: Você só pode estacionar nesta rua novamente após 15 minutos do término da última vaga. Aguarde ${falta} minuto(s).`);
+                    }
+                }
+            }
+
+            await update(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), { 
+                placa: document.getElementById('placa-view').innerText, 
+                rua: ruaDetectadaOficial, 
+                inicio: Date.now(), 
+                final: Date.now() + (parseInt(document.getElementById('tempo-select').value) * 3600000), 
+                valorHora: vH 
+            });
+        };
+
+        window.sairDaVaga = async () => {
+            onValue(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), async (snap) => {
+                const v = snap.val(); if (!v) return;
+                const tot = Math.max(1, Math.ceil((Date.now() - v.inicio) / 60000)) * (v.valorHora / 60);
+                if (confirm(`Encerrar? R$ ${tot.toFixed(2)}`)) {
+                    const agora = Date.now();
+                    await push(ref(db, `usuarios/${currentUser.uid}/historico`), { 
+                        placa: v.placa, 
+                        rua: v.rua, 
+                        valor: tot, 
+                        data: new Date().toLocaleDateString(), 
+                        entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), 
+                        saida: new Date(agora).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+                        timestampSaida: agora // Guardamos o tempo exato para o cálculo do bloqueio
+                    });
+                    await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot }); 
+                    await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
+                }
+            }, {onlyOnce: true});
+        };
+
         function monitorarUsuario(uid) {
             onValue(ref(db, `usuarios/${uid}`), (snap) => {
                 const d = snap.val(); saldoLocal = d?.saldo || 0;
@@ -240,23 +292,6 @@
                 }
             });
         }
-
-        window.ativarVaga = async () => {
-            const vH = parseFloat(document.getElementById('zona-select').value);
-            if (saldoLocal < vH) return alert("Saldo insuficiente!");
-            await update(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), { placa: document.getElementById('placa-view').innerText, rua: ruaDetectadaOficial, inicio: Date.now(), final: Date.now() + (parseInt(document.getElementById('tempo-select').value) * 3600000), valorHora: vH });
-        };
-
-        window.sairDaVaga = async () => {
-            onValue(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), async (snap) => {
-                const v = snap.val(); if (!v) return;
-                const tot = Math.max(1, Math.ceil((Date.now() - v.inicio) / 60000)) * (v.valorHora / 60);
-                if (confirm(`Encerrar? R$ ${tot.toFixed(2)}`)) {
-                    await push(ref(db, `usuarios/${currentUser.uid}/historico`), { placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(), entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), saida: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) });
-                    await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot }); await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
-                }
-            }, {onlyOnce: true});
-        };
 
         function iniciarCronometro(v) {
             clearInterval(timerCron);
