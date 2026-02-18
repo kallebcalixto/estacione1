@@ -172,7 +172,6 @@
             if (gpsIniciado || !navigator.geolocation) return;
             gpsIniciado = true;
             document.getElementById('txt-local').innerText = "📍 LOCALIZANDO RUA...";
-            const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
             const success = (pos) => {
                 fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=18`, { headers: { 'Accept-Language': 'pt-BR' } })
                 .then(r => r.json()).then(data => {
@@ -180,11 +179,8 @@
                     processarLogicaRua(ruaDetectadaOficial);
                 });
             };
-            const error = () => {
-                document.getElementById('txt-local').innerText = "📍 TOQUE PARA REATIVAR GPS";
-                gpsIniciado = false;
-            };
-            watchId = navigator.geolocation.watchPosition(success, error, options);
+            const error = () => { gpsIniciado = false; };
+            watchId = navigator.geolocation.watchPosition(success, error, { enableHighAccuracy: true });
         };
 
         function processarLogicaRua(rua) {
@@ -223,28 +219,25 @@
         };
         window.fazerLogout = () => { if(confirm("Sair?")) signOut(auth).then(() => location.reload()); };
 
-        // --- LÓGICA DE BLOQUEIO DE 15 MINUTOS (NOVA REGRA) ---
+        // --- LÓGICA DE ATIVAÇÃO COM BLOQUEIO DE 15 MIN ---
         window.ativarVaga = async () => {
             const vH = parseFloat(document.getElementById('zona-select').value);
+            const horasContratadas = parseInt(document.getElementById('tempo-select').value);
             if (saldoLocal < vH) return alert("Saldo insuficiente!");
 
-            // Verificar histórico para bloqueio de 15 minutos na mesma rua
-            const histRef = ref(db, `usuarios/${currentUser.uid}/historico`);
-            const snap = await get(histRef);
+            const snap = await get(ref(db, `usuarios/${currentUser.uid}/historico`));
             const historico = snap.val();
             
             if (historico) {
                 const agora = Date.now();
-                const tempoBloqueioMs = 15 * 60000; // 15 minutos
+                const ultimaVaga = Object.values(historico).reverse().find(h => h.rua === ruaDetectadaOficial);
                 
-                // Procurar último registro na mesma rua
-                const ultimaVagaNessaRua = Object.values(historico).reverse().find(h => h.rua === ruaDetectadaOficial);
-                
-                if (ultimaVagaNessaRua && ultimaVagaNessaRua.timestampSaida) {
-                    const tempoPassado = agora - ultimaVagaNessaRua.timestampSaida;
-                    if (tempoPassado < tempoBloqueioMs) {
-                        const falta = Math.ceil((tempoBloqueioMs - tempoPassado) / 60000);
-                        return alert(`BLOQUEADO: Você só pode estacionar nesta rua novamente após 15 minutos do término da última vaga. Aguarde ${falta} minuto(s).`);
+                // Só bloqueia se ele esgotou o tempo contratado anteriormente
+                if (ultimaVaga && ultimaVaga.esgotouTempo) {
+                    const diff = agora - ultimaVaga.timestampSaida;
+                    if (diff < 900000) { // 15 minutos em ms
+                        const falta = Math.ceil((900000 - diff) / 60000);
+                        return alert(`VOCÊ SÓ PODE ESTACIONAR DEPOIS DE 15 MINUTOS APÓS O TÉRMINO DAS 2 HORAS. AGUARDE ${falta} MINUTO(S).`);
                     }
                 }
             }
@@ -253,25 +246,29 @@
                 placa: document.getElementById('placa-view').innerText, 
                 rua: ruaDetectadaOficial, 
                 inicio: Date.now(), 
-                final: Date.now() + (parseInt(document.getElementById('tempo-select').value) * 3600000), 
-                valorHora: vH 
+                final: Date.now() + (horasContratadas * 3600000), 
+                valorHora: vH,
+                tempoTotalMs: horasContratadas * 3600000 
             });
         };
 
         window.sairDaVaga = async () => {
             onValue(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), async (snap) => {
                 const v = snap.val(); if (!v) return;
-                const tot = Math.max(1, Math.ceil((Date.now() - v.inicio) / 60000)) * (v.valorHora / 60);
+                const agora = Date.now();
+                const tempoGasto = agora - v.inicio;
+                const tot = Math.max(1, Math.ceil(tempoGasto / 60000)) * (v.valorHora / 60);
+                
+                // Verifica se ele esgotou o tempo (tempo gasto maior ou igual ao contratado)
+                const esgotou = tempoGasto >= v.tempoTotalMs;
+
                 if (confirm(`Encerrar? R$ ${tot.toFixed(2)}`)) {
-                    const agora = Date.now();
                     await push(ref(db, `usuarios/${currentUser.uid}/historico`), { 
-                        placa: v.placa, 
-                        rua: v.rua, 
-                        valor: tot, 
-                        data: new Date().toLocaleDateString(), 
+                        placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(), 
                         entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), 
                         saida: new Date(agora).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
-                        timestampSaida: agora // Guardamos o tempo exato para o cálculo do bloqueio
+                        timestampSaida: agora,
+                        esgotouTempo: esgotou 
                     });
                     await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot }); 
                     await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
