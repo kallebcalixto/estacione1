@@ -20,8 +20,19 @@
         .aba-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .card-app { background: white; border-radius: 1.25rem; padding: 1.25rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .loading-pulse { animation: pulse 1.8s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        
+        /* ALTERAÇÃO DA COR DO GPS PISCANDO */
+        .loading-pulse { 
+            animation: pulse 1.5s infinite; 
+            color: #15711b; 
+            font-weight: 800;
+        }
+        @keyframes pulse { 
+            0% { opacity: 1; } 
+            50% { opacity: 0.3; } 
+            100% { opacity: 1; } 
+        }
+
         .btn-value { border: 2px solid #e5e7eb; border-radius: 1rem; padding: 15px 10px; font-weight: 800; color: #475569; background: white; }
         .btn-value.active { border-color: #15711b; background-color: #f0fdf4; color: #15711b; }
         #modal-recibo { display:none; position:fixed; inset:0; z-index:200; background:white; padding: 20px; flex-direction: column; }
@@ -80,7 +91,7 @@
                     <h3 class="text-3xl font-black text-black tracking-tighter" id="placa-view">SELECIONE</h3>
                 </div>
                 
-                <div id="gps-container" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center">
+                <div id="gps-container" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-center">
                     <span id="txt-local" class="loading-pulse">📍 LOCALIZANDO RUA...</span>
                 </div>
 
@@ -167,7 +178,6 @@
         window.fazerLogout = () => { if(confirm("Deseja Sair?")) signOut(auth).then(() => location.reload()); };
         window.esqueciSenha = () => { const e = document.getElementById('login-email').value; if(!e) return alert("Digite o e-mail"); sendPasswordResetEmail(auth, e).then(() => alert("Verifique seu e-mail")); };
 
-        // GPS CORRIGIDO: PUXA O NOME DA RUA CORRETAMENTE
         window.iniciarGps = () => {
             if (!navigator.geolocation) return;
             navigator.geolocation.getCurrentPosition((pos) => {
@@ -195,9 +205,10 @@
 
             if (zona) {
                 document.getElementById('txt-local').innerHTML = `📍 ${rua.toUpperCase()}`;
+                document.getElementById('txt-local').classList.remove('loading-pulse');
+                document.getElementById('txt-local').style.color = "#15711b"; 
+
                 selZ.innerHTML = `<option value="${zona.preco}">${zona.setor} - R$ ${zona.preco.toFixed(2)}/h</option>`;
-                
-                // LÓGICA DE HORAS DO ADMIN MANTIDA
                 let maxH = zona.horasMaximas || 1;
                 let htmlT = `<option value="1">1 Hora</option>`;
                 if (maxH >= 2) htmlT += `<option value="2">2 Horas</option>`;
@@ -206,6 +217,7 @@
                 if(placa !== "SELECIONE") btn.classList.remove('opacity-50', 'pointer-events-none');
             } else {
                 document.getElementById('txt-local').innerHTML = `📍 ${rua.toUpperCase()} <br><span class="text-red-500 text-[10px]">FORA DA ÁREA</span>`;
+                document.getElementById('txt-local').classList.remove('loading-pulse');
                 btn.classList.add('opacity-50', 'pointer-events-none');
             }
         }
@@ -221,7 +233,7 @@
         window.ativarVaga = async () => {
             const vH = parseFloat(document.getElementById('zona-select').value);
             const horas = parseInt(document.getElementById('tempo-select').value);
-            if (saldoLocal < vH) return alert("Saldo insuficiente!");
+            if (saldoLocal < (vH * horas)) return alert("Saldo insuficiente!");
             const histSnap = await get(ref(db, `usuarios/${currentUser.uid}/historico`));
             const hist = histSnap.val();
             if (hist) {
