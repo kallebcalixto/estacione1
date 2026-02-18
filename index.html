@@ -183,8 +183,7 @@
         let somAlerta = document.getElementById('som-alerta');
         let aviso15Feito = false;
 
-        // LIBERAR AUDIO NO PRIMEIRO CLIQUE (Regra do Navegador)
-        window.liberarAudio = () => { somAlerta.play().then(() => { somAlerta.pause(); somAlerta.currentTime = 0; }); };
+        window.liberarAudio = () => { somAlerta.play().then(() => { somAlerta.pause(); somAlerta.currentTime = 0; }).catch(()=>{}); };
 
         window.pararAlertaSonoro = () => {
             somAlerta.pause();
@@ -270,11 +269,12 @@
             if (historico) {
                 const agora = Date.now();
                 const ultimaVaga = Object.values(historico).reverse().find(h => h.rua === ruaDetectadaOficial);
+                // BLOQUEIO DINÂMICO BASEADO NO SETOR ESCOLHIDO ANTERIORMENTE
                 if (ultimaVaga && ultimaVaga.esgotouTempo) {
                     const diff = agora - ultimaVaga.timestampSaida;
                     if (diff < 900000) {
                         const falta = Math.ceil((900000 - diff) / 60000);
-                        return alert(`BLOQUEIO DE 15 MINUTOS APÓS 2 HORAS. AGUARDE ${falta} MINUTO(S).`);
+                        return alert(`LIMITE DO SETOR ATINGIDO. AGUARDE ${falta} MINUTO(S) PARA NOVA ENTRADA.`);
                     }
                 }
             }
@@ -292,6 +292,7 @@
                 const agora = Date.now();
                 const tempoGasto = agora - v.inicio;
                 const tot = Math.max(1, Math.ceil(tempoGasto / 60000)) * (v.valorHora / 60);
+                // REGRA: Esgotou o tempo baseado no que foi escolhido (1h ou 2h)
                 const esgotou = tempoGasto >= v.tempoTotalMs;
                 if (confirm(`Encerrar? R$ ${tot.toFixed(2)}`)) {
                     window.pararAlertaSonoro();
@@ -327,24 +328,20 @@
             timerCron = setInterval(() => {
                 const res = v.final - Date.now();
                 document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil((Date.now()-v.inicio)/60000)*(v.valorHora/60)).toFixed(2).replace('.',',')}`;
-                
-                // --- LÓGICA DO SINAL SONORO ---
-                if (res <= 900000 && res > 0 && !aviso15Feito) { // 15 minutos
+                if (res <= 900000 && res > 0 && !aviso15Feito) { 
                     aviso15Feito = true;
                     document.getElementById('alerta-mensagem').innerText = "Faltam 15 minutos para seu tempo esgotar!";
                     document.getElementById('alerta-visual-container').classList.remove('hidden');
-                    somAlerta.play();
+                    somAlerta.play().catch(()=>{});
                 }
-
                 if (res <= 0) { 
                     document.getElementById('cronometro').innerText = "FIM"; 
                     document.getElementById('alerta-mensagem').innerText = "SEU TEMPO ACABOU! SAIA DA VAGA IMEDIATAMENTE.";
                     document.getElementById('alerta-visual-container').classList.remove('hidden');
                     somAlerta.loop = true;
-                    somAlerta.play();
+                    somAlerta.play().catch(()=>{});
                     return; 
                 }
-                
                 const m = Math.floor((res%3600000)/60000), s = Math.floor((res%60000)/1000);
                 document.getElementById('cronometro').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             }, 1000);
