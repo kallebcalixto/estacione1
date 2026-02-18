@@ -8,24 +8,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; padding-bottom: 100px; overflow-x: hidden; width: 100%; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; padding-bottom: 100px; overflow-x: hidden; }
         .zazul-green { background-color: #15711b; }
         .zazul-text-green { color: #15711b; }
         .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-around; padding: 12px 0 25px 0; z-index: 50; }
         .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; flex: 1; background: none; border: none; }
         .nav-item.active { color: #15711b; }
-        .btn-zazul { background-color: #15711b; color: white; border-radius: 1rem; font-weight: 700; text-transform: uppercase; transition: all 0.2s; }
-        .btn-zazul:active { transform: scale(0.98); }
+        .btn-zazul { background-color: #15711b; color: white; border-radius: 1rem; font-weight: 700; text-transform: uppercase; }
         .aba-content { display: none; width: 100%; animation: fadeIn 0.3s ease; }
         .aba-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .card-app { background: white; border-radius: 1.25rem; padding: 1.25rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .loading-pulse { animation: pulse 1.8s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        .btn-value { border: 2px solid #e5e7eb; border-radius: 1rem; padding: 15px 10px; font-weight: 800; color: #475569; background: white; }
-        .btn-value.active { border-color: #15711b; background-color: #f0fdf4; color: #15711b; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+        .card-app { background: white; border-radius: 1.25rem; padding: 1.25rem; border: 1px solid #e5e7eb; }
         #modal-recibo { display:none; position:fixed; inset:0; z-index:200; background:white; padding: 20px; flex-direction: column; }
-        @media print { body * { visibility: hidden; } #area-impressao, #area-impressao * { visibility: visible; } #area-impressao { position: absolute; left: 0; top: 0; width: 100%; } .no-print { display: none !important; } }
     </style>
 </head>
 <body onclick="window.iniciarGps(); window.liberarAudio();">
@@ -33,134 +27,87 @@
     <audio id="som-alerta" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
     <div id="modal-recibo">
-        <div id="area-impressao" class="border-2 border-black p-6 space-y-4 text-center">
-            <h2 class="font-black text-xl border-b-2 border-black pb-2">COMPROVANTE ÁREA AZUL</h2>
-            <div class="text-left space-y-2 font-bold uppercase text-sm">
+        <div id="area-impressao" class="border-2 border-black p-6 text-center">
+            <h2 class="font-black text-xl border-b-2 border-black pb-2">RECIBO ÁREA AZUL</h2>
+            <div class="text-left space-y-2 font-bold uppercase text-sm mt-4">
                 <p>Placa: <span id="rec-placa">---</span></p>
                 <p>Rua: <span id="rec-rua">---</span></p>
                 <p>Data: <span id="rec-data">---</span></p>
                 <p>Entrada: <span id="rec-entrada">---</span></p>
                 <p>Saída: <span id="rec-saida">---</span></p>
-                <p class="text-lg pt-2 border-t">Valor Pago: <span id="rec-valor">R$ 0,00</span></p>
+                <p class="text-lg pt-2 border-t mt-2">Valor: <span id="rec-valor">R$ 0,00</span></p>
             </div>
-            <p class="text-[10px] text-gray-500">Estacione Colombo - Todos os direitos reservados</p>
         </div>
-        <div class="flex gap-2 mt-6 no-print">
-            <button onclick="window.print()" class="flex-1 btn-zazul py-4">🖨️ Salvar/Print</button>
-            <button onclick="document.getElementById('modal-recibo').style.display='none'" class="flex-1 bg-gray-200 font-bold py-4 rounded-2xl uppercase">Fechar</button>
-        </div>
+        <button onclick="document.getElementById('modal-recibo').style.display='none'" class="mt-4 w-full bg-gray-200 font-bold py-4 rounded-2xl uppercase">Fechar</button>
     </div>
 
     <div id="tela-login" class="fixed inset-0 z-[100] bg-white flex flex-col p-6 items-center justify-center">
-        <div id="login-container" class="w-full max-w-md space-y-6 text-center">
-            <div class="zazul-green w-20 h-20 rounded-3xl mx-auto flex items-center justify-center shadow-lg">
-                <span class="text-white text-4xl font-black">E</span>
-            </div>
-            <h2 class="text-2xl font-black zazul-text-green uppercase">Entrar no Sistema</h2>
-            <div class="space-y-3">
-                <input type="email" id="login-email" placeholder="E-mail" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
-                <input type="password" id="login-senha" placeholder="Senha" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
-                <button onclick="window.fazerLogin()" class="w-full btn-zazul py-4 text-lg shadow-lg">Acessar Conta</button>
-                <button onclick="document.getElementById('login-container').classList.add('hidden'); document.getElementById('recuperar-container').classList.remove('hidden');" class="text-xs font-bold text-gray-400 uppercase mt-2">Esqueci minha senha</button>
-            </div>
-        </div>
-        <div id="recuperar-container" class="w-full max-w-md space-y-6 text-center hidden">
-            <h2 class="text-2xl font-black zazul-text-green uppercase">Recuperar Senha</h2>
-            <p class="text-gray-500 text-sm font-bold">Digite seu e-mail para receber o link de redefinição.</p>
-            <div class="space-y-3">
-                <input type="email" id="recuperar-email" placeholder="Seu e-mail cadastrado" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
-                <button onclick="window.enviarLinkRecuperacao()" class="w-full btn-zazul py-4 text-lg shadow-lg">Enviar Link</button>
-                <button onclick="document.getElementById('recuperar-container').classList.add('hidden'); document.getElementById('login-container').classList.remove('hidden');" class="text-xs font-bold text-gray-400 uppercase mt-2 block mx-auto">Voltar ao Login</button>
-            </div>
-        </div>
+        <div class="zazul-green w-16 h-16 rounded-2xl mb-4 flex items-center justify-center text-white text-3xl font-black">E</div>
+        <h2 class="text-xl font-black zazul-text-green uppercase mb-6">Acesso</h2>
+        <input type="email" id="login-email" placeholder="E-mail" class="w-full p-4 border rounded-2xl mb-3 font-bold">
+        <input type="password" id="login-senha" placeholder="Senha" class="w-full p-4 border rounded-2xl mb-4 font-bold">
+        <button onclick="window.fazerLogin()" class="w-full btn-zazul py-4 shadow-lg">Entrar</button>
     </div>
 
-    <header class="zazul-green text-white p-4 flex justify-between items-center sticky top-0 z-40 shadow-md">
-        <div class="w-10"></div> 
+    <header class="zazul-green text-white p-4 text-center sticky top-0 z-40 shadow-md">
         <h1 class="text-lg font-black tracking-widest uppercase">Estacione Colombo</h1>
-        <button onclick="window.fazerLogout()" class="text-[10px] font-bold border border-white/30 px-3 py-1 rounded-lg uppercase">Sair</button>
     </header>
 
     <main class="max-w-md mx-auto p-4 space-y-4">
         
         <section id="aba-estacionar" class="aba-content active space-y-4">
-            <div class="card-app text-center py-6">
-                <p class="text-gray-500 font-bold text-sm uppercase">Saldo Disponível</p>
-                <h2 class="text-4xl font-black text-black my-2" id="saldo-display">R$ 0,00</h2>
-                <button onclick="window.mudarAba('aba-recarga')" class="mt-2 text-xs font-black text-green-700 border border-green-200 px-6 py-2 rounded-full bg-green-50 uppercase">＋ Comprar Créditos</button>
+            <div class="card-app text-center">
+                <p class="text-gray-400 font-bold text-xs uppercase">Saldo</p>
+                <h2 class="text-3xl font-black" id="saldo-display">R$ 0,00</h2>
             </div>
 
             <div id="form-estacionar" class="space-y-4">
                 <div class="card-app bg-gray-50 border-dashed border-2 text-center" onclick="window.mudarAba('aba-veiculos')">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase">Veículo Selecionado</p>
-                    <h3 class="text-3xl font-black text-black tracking-tighter" id="placa-view">SELECIONE</h3>
+                    <p class="text-[10px] font-bold text-gray-400">VEÍCULO</p>
+                    <h3 class="text-2xl font-black" id="placa-view">SELECIONE</h3>
                 </div>
-                <div id="gps-container" onclick="window.iniciarGps()" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center transition-all duration-300">
-                    <span id="txt-local" class="loading-pulse">📍 TOQUE PARA LOCALIZAR RUA</span>
+                <div id="gps-container" class="w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center">
+                    <span id="txt-local">📍 LOCALIZANDO...</span>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <select id="zona-select" class="w-full p-4 border rounded-2xl font-bold text-sm bg-white border-gray-200 outline-none">
-                        <option value="">Aguardando Rua...</option>
+                    <select id="zona-select" class="p-4 border rounded-2xl font-bold text-xs bg-white outline-none">
+                        <option value="">Rua...</option>
                     </select>
-                    <select id="tempo-select" class="w-full p-4 border rounded-2xl font-bold text-sm bg-white border-gray-200 outline-none">
-                        <option value="1">1 Hora</option>
-                        <option value="2">2 Horas</option>
+                    <select id="tempo-select" class="p-4 border rounded-2xl font-bold text-xs bg-white outline-none">
+                        <option value="">Tempo...</option>
                     </select>
                 </div>
-                <button id="btn-estacionar-main" onclick="window.ativarVaga()" class="w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none shadow-xl">Aguardando GPS...</button>
+                <button id="btn-estacionar-main" onclick="window.ativarVaga()" class="w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none shadow-xl">Ativar Vaga</button>
             </div>
 
             <div id="vaga-ativa-box" class="hidden space-y-4">
                 <div id="alerta-visual-container" class="hidden card-app bg-red-600 text-white text-center p-4 animate-pulse">
-                    <p class="font-black uppercase text-xs">Atenção!</p>
-                    <p id="alerta-mensagem" class="font-bold text-sm"></p>
-                    <button onclick="window.pararAlertaSonoro()" class="mt-2 w-full bg-white text-red-600 py-2 rounded-xl font-black uppercase text-xs">Estou Ciente</button>
+                    <p id="alerta-mensagem" class="font-black uppercase text-sm"></p>
+                    <button onclick="window.pararAlertaSonoro()" class="mt-2 w-full bg-white text-red-600 py-2 rounded-xl font-black text-xs uppercase">Ciente</button>
                 </div>
-
-                <div class="card-app border-2 border-green-600 text-center bg-green-50/30">
-                    <p class="text-green-600 font-black text-xs uppercase">Vaga Ativa</p>
-                    <h3 id="placa-ativa-label" class="text-4xl font-black my-3">---</h3>
-                    <div class="grid grid-cols-2 gap-4 mt-4 border-t pt-4">
-                        <div><p class="text-[10px] text-gray-400 font-bold uppercase">Custo</p><span id="valor-correndo" class="font-black text-xl">R$ 0,00</span></div>
+                <div class="card-app border-2 border-green-600 text-center">
+                    <h3 id="placa-ativa-label" class="text-3xl font-black mb-4">---</h3>
+                    <div class="grid grid-cols-2 border-t pt-4">
+                        <div><p class="text-[10px] text-gray-400 font-bold uppercase">Valor</p><span id="valor-correndo" class="font-black text-xl">R$ 0,00</span></div>
                         <div><p class="text-[10px] text-gray-400 font-bold uppercase">Restante</p><span id="cronometro" class="font-black text-xl text-blue-600">00:00</span></div>
                     </div>
                 </div>
-                <button onclick="window.sairDaVaga()" class="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase shadow-lg">Encerrar Vaga</button>
-            </div>
-        </section>
-
-        <section id="aba-recarga" class="aba-content space-y-4">
-            <h3 class="zazul-text-green font-black uppercase text-sm text-center tracking-wider">Selecione o Valor</h3>
-            <div class="grid grid-cols-3 gap-3">
-                <button onclick="window.selVal(3, this)" class="btn-value shadow-sm">R$ 3</button>
-                <button onclick="window.selVal(5, this)" class="btn-value shadow-sm">R$ 5</button>
-                <button onclick="window.selVal(10, this)" class="btn-value shadow-sm">R$ 10</button>
-                <button onclick="window.selVal(20, this)" class="btn-value shadow-sm">R$ 20</button>
-                <button onclick="window.selVal(30, this)" class="btn-value shadow-sm">R$ 30</button>
-                <button onclick="window.selVal(50, this)" class="btn-value shadow-sm">R$ 50</button>
-            </div>
-            <button id="btn-gerar" onclick="window.gerarPixReal()" class="w-full btn-zazul py-5 opacity-50 shadow-md" disabled>Gerar PIX</button>
-            <div id="pix-area" class="hidden card-app text-center space-y-4 border-2 border-dashed border-green-200">
-                <img id="qrcode-img" class="mx-auto w-56 h-56 rounded-xl">
-                <textarea id="pix-code" readonly class="w-full text-[10px] p-3 bg-gray-50 border rounded-xl font-mono text-gray-500"></textarea>
-                <button onclick="window.copiarPix()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold uppercase text-sm">Copiar Código PIX</button>
+                <button onclick="window.sairDaVaga()" class="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase">Encerrar</button>
             </div>
         </section>
 
         <section id="aba-veiculos" class="aba-content space-y-4">
-            <h3 class="zazul-text-green font-black uppercase text-sm px-1">Meus Veículos</h3>
-            <div class="card-app space-y-4">
-                <input type="text" id="input-placa" placeholder="PLACA" class="w-full p-4 border-2 rounded-2xl font-black text-center text-2xl uppercase outline-none">
-                <input type="text" id="input-modelo" placeholder="MODELO" class="w-full p-4 border rounded-2xl text-sm font-semibold outline-none">
-                <button onclick="window.salvarNovoVeiculo()" class="w-full btn-zazul py-4">Salvar Carro</button>
+            <h3 class="zazul-text-green font-black uppercase text-sm">Meus Carros</h3>
+            <div class="card-app space-y-3">
+                <input type="text" id="input-placa" placeholder="PLACA" class="w-full p-4 border rounded-xl font-black text-center text-xl uppercase">
+                <button onclick="window.salvarNovoVeiculo()" class="w-full btn-zazul py-3">Salvar</button>
             </div>
-            <div id="lista-veiculos" class="space-y-3"></div>
+            <div id="lista-veiculos"></div>
         </section>
 
-        <section id="aba-historico" class="aba-content space-y-4">
-            <h3 class="zazul-text-green font-black uppercase text-sm px-1">Meus Recibos</h3>
-            <div id="lista-historico" class="space-y-3"></div>
-        </section>
+        <section id="aba-historico" class="aba-content space-y-4"><div id="lista-historico"></div></section>
+        <section id="aba-recarga" class="aba-content text-center py-10">Use o Painel para Adicionar Saldo</section>
+
     </main>
 
     <nav class="nav-bottom">
@@ -171,138 +118,104 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getDatabase, ref, onValue, update, remove, push, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = { apiKey: "AIzaSyDS2D6-KCvsJomst0m2qs3J93UEq3kWw1Q", authDomain: "estacione-6cfbf.firebaseapp.com", databaseURL: "https://estacione-6cfbf-default-rtdb.firebaseio.com", projectId: "estacione-6cfbf", appId: "1:490946040222:web:0071714b8e6d645459468f" };
         const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getDatabase(app);
-        const API_URL = "https://estacione-backend.onrender.com";
 
-        let currentUser = null; let saldoLocal = 0; let zonasAdmin = []; let timerCron = null; let ruaDetectadaOficial = "Rua Desconhecida"; let valSel = 0;
-        let gpsIniciado = false; let watchId = null;
-        let somAlerta = document.getElementById('som-alerta');
-        let aviso15Feito = false;
+        let currentUser = null; let saldoLocal = 0; let zonasAdmin = []; let timerCron = null; 
+        let ruaDetectadaOficial = ""; let somAlerta = document.getElementById('som-alerta'); let aviso15Feito = false;
 
-        window.liberarAudio = () => { somAlerta.play().then(() => { somAlerta.pause(); somAlerta.currentTime = 0; }).catch(()=>{}); };
-
-        window.pararAlertaSonoro = () => {
-            somAlerta.pause();
-            somAlerta.loop = false;
-            document.getElementById('alerta-visual-container').classList.add('hidden');
-        };
-
-        window.abrirRecibo = (placa, rua, data, entrada, saida, valor) => {
-            document.getElementById('rec-placa').innerText = placa;
-            document.getElementById('rec-rua').innerText = rua;
-            document.getElementById('rec-data').innerText = data;
-            document.getElementById('rec-entrada').innerText = entrada;
-            document.getElementById('rec-saida').innerText = saida;
-            document.getElementById('rec-valor').innerText = `R$ ${parseFloat(valor).toFixed(2).replace('.',',')}`;
-            document.getElementById('modal-recibo').style.display = 'flex';
-        };
-
-        window.enviarLinkRecuperacao = () => {
-            const email = document.getElementById('recuperar-email').value;
-            if (!email) return alert("Digite o e-mail!");
-            sendPasswordResetEmail(auth, email).then(() => {
-                alert("Link enviado!");
-                document.getElementById('recuperar-container').classList.add('hidden');
-                document.getElementById('login-container').classList.remove('hidden');
-            }).catch(err => alert("Erro: " + err.message));
-        };
+        window.liberarAudio = () => { somAlerta.play().then(() => { somAlerta.pause(); }).catch(()=>{}); };
+        window.pararAlertaSonoro = () => { somAlerta.pause(); somAlerta.loop = false; document.getElementById('alerta-visual-container').classList.add('hidden'); };
 
         window.iniciarGps = () => {
-            if (gpsIniciado || !navigator.geolocation) return;
-            gpsIniciado = true;
-            const success = (pos) => {
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=18`, { headers: { 'Accept-Language': 'pt-BR' } })
+            if (!navigator.geolocation) return;
+            navigator.geolocation.watchPosition((pos) => {
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
                 .then(r => r.json()).then(data => {
-                    ruaDetectadaOficial = data.address.road || data.address.suburb || "Rua Desconhecida";
-                    processarLogicaRua(ruaDetectadaOficial);
+                    ruaDetectadaOficial = data.address.road || "";
+                    processarRua(ruaDetectadaOficial);
                 });
-            };
-            watchId = navigator.geolocation.watchPosition(success, () => {gpsIniciado=false;}, { enableHighAccuracy: true });
+            }, null, { enableHighAccuracy: true });
         };
 
-        function processarLogicaRua(rua) {
-            const box = document.getElementById('gps-container');
-            const txt = document.getElementById('txt-local');
-            const sel = document.getElementById('zona-select');
+        function processarRua(rua) {
+            const selZ = document.getElementById('zona-select');
+            const selT = document.getElementById('tempo-select');
             const btn = document.getElementById('btn-estacionar-main');
-            const placa = document.getElementById('placa-view').innerText;
-            const limpar = (t) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\b(rua|avenida|av|travessa|pç|praça|al)\b/g, "").replace(/\s+/g, "").trim();
-            const ruaGpsLimpa = limpar(rua);
-            const zona = zonasAdmin.find(z => { const rb = limpar(z.rua); return ruaGpsLimpa.includes(rb) || rb.includes(ruaGpsLimpa); });
+            const limpar = (t) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
+            
+            const zona = zonasAdmin.find(z => limpar(rua).includes(limpar(z.rua)));
+
             if (zona) {
-                box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-green-100 text-green-700 text-center border-green-300";
-                txt.innerHTML = `📍 ${rua.toUpperCase()}`;
-                sel.innerHTML = `<option value="${zona.preco}">${zona.setor} - R$ ${zona.preco.toFixed(2)}</option>`;
-                if(placa !== "SELECIONE") { btn.className = "w-full btn-zazul py-5 text-lg shadow-lg"; btn.innerText = "ESTACIONAR AGORA"; btn.classList.remove('opacity-50', 'pointer-events-none'); }
+                document.getElementById('txt-local').innerText = `📍 ${rua.toUpperCase()}`;
+                selZ.innerHTML = `<option value="${zona.preco}">${zona.setor} - R$ ${zona.preco.toFixed(2)}</option>`;
+                
+                // --- TRAVA DE TEMPO PELO SETOR ---
+                let maxH = zona.horasMaximas || 1;
+                let htmlT = `<option value="1">1 Hora</option>`;
+                if (maxH >= 2) htmlT += `<option value="2">2 Horas</option>`;
+                selT.innerHTML = htmlT;
+
+                if(document.getElementById('placa-view').innerText !== "SELECIONE") {
+                    btn.classList.remove('opacity-50', 'pointer-events-none');
+                }
             } else {
-                box.className = "w-full p-4 border rounded-2xl font-bold text-sm bg-gray-100 text-gray-500 text-center";
-                txt.innerHTML = `📍 ${rua.toUpperCase()} <br><span class="text-red-500 text-[10px]">FORA DA ÁREA AZUL</span>`;
-                sel.innerHTML = `<option value="">Indisponível</option>`;
-                btn.className = "w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none"; btn.innerText = "FORA DE ÁREA";
+                document.getElementById('txt-local').innerText = "📍 FORA DE ÁREA AZUL";
+                btn.classList.add('opacity-50', 'pointer-events-none');
             }
         }
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user; document.getElementById('tela-login').classList.add('hidden');
-                onValue(ref(db, 'configuracoes_zonas'), (snap) => { zonasAdmin = snap.val() ? Object.values(snap.val()) : []; window.iniciarGps(); });
-                monitorarUsuario(user.uid); carregarVeiculos(user.uid); carregarHistorico(user.uid);
+                onValue(ref(db, 'configuracoes_zonas'), (snap) => { zonasAdmin = snap.val() ? Object.values(snap.val()) : []; });
+                monitorarUsuario(user.uid); carregarVeiculos(user.uid);
             } else { document.getElementById('tela-login').classList.remove('hidden'); }
         });
 
         window.fazerLogin = () => {
-            const e = document.getElementById('login-email').value; const s = document.getElementById('login-senha').value;
-            signInWithEmailAndPassword(auth, e, s).then(() => window.iniciarGps()).catch(err => alert("Erro: " + err.message));
+            signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-senha').value);
         };
-        window.fazerLogout = () => { if(confirm("Sair?")) signOut(auth).then(() => location.reload()); };
 
         window.ativarVaga = async () => {
-            const vH = parseFloat(document.getElementById('zona-select').value);
-            const horasContratadas = parseInt(document.getElementById('tempo-select').value);
-            if (saldoLocal < vH) return alert("Saldo insuficiente!");
-            const snap = await get(ref(db, `usuarios/${currentUser.uid}/historico`));
-            const historico = snap.val();
-            if (historico) {
-                const agora = Date.now();
-                const ultimaVaga = Object.values(historico).reverse().find(h => h.rua === ruaDetectadaOficial);
-                // BLOQUEIO DINÂMICO BASEADO NO SETOR ESCOLHIDO ANTERIORMENTE
-                if (ultimaVaga && ultimaVaga.esgotouTempo) {
-                    const diff = agora - ultimaVaga.timestampSaida;
-                    if (diff < 900000) {
-                        const falta = Math.ceil((900000 - diff) / 60000);
-                        return alert(`LIMITE DO SETOR ATINGIDO. AGUARDE ${falta} MINUTO(S) PARA NOVA ENTRADA.`);
-                    }
+            const horas = parseInt(document.getElementById('tempo-select').value);
+            const preco = parseFloat(document.getElementById('zona-select').value);
+            if (saldoLocal < preco) return alert("Saldo insuficiente!");
+            
+            // Verificação do bloqueio de 15 min
+            const histSnap = await get(ref(db, `usuarios/${currentUser.uid}/historico`));
+            const hist = histSnap.val();
+            if (hist) {
+                const ultima = Object.values(hist).reverse().find(h => h.rua === ruaDetectadaOficial);
+                if (ultima?.esgotouTempo && (Date.now() - ultima.timestampSaida < 900000)) {
+                    return alert("SETOR BLOQUEADO! AGUARDE 15 MINUTOS.");
                 }
             }
+
             aviso15Feito = false;
-            await update(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), { 
-                placa: document.getElementById('placa-view').innerText, rua: ruaDetectadaOficial, 
-                inicio: Date.now(), final: Date.now() + (horasContratadas * 3600000), 
-                valorHora: vH, tempoTotalMs: horasContratadas * 3600000 
+            await update(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), {
+                placa: document.getElementById('placa-view').innerText,
+                rua: ruaDetectadaOficial, inicio: Date.now(),
+                final: Date.now() + (horas * 3600000), valorHora: preco,
+                tempoTotalMs: horas * 3600000
             });
         };
 
         window.sairDaVaga = async () => {
             onValue(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), async (snap) => {
                 const v = snap.val(); if (!v) return;
-                const agora = Date.now();
-                const tempoGasto = agora - v.inicio;
-                const tot = Math.max(1, Math.ceil(tempoGasto / 60000)) * (v.valorHora / 60);
-                // REGRA: Esgotou o tempo baseado no que foi escolhido (1h ou 2h)
-                const esgotou = tempoGasto >= v.tempoTotalMs;
-                if (confirm(`Encerrar? R$ ${tot.toFixed(2)}`)) {
+                const tempo = Date.now() - v.inicio;
+                const tot = Math.max(1, Math.ceil(tempo / 60000)) * (v.valorHora / 60);
+                if (confirm(`Pagar R$ ${tot.toFixed(2)}?`)) {
                     window.pararAlertaSonoro();
-                    await push(ref(db, `usuarios/${currentUser.uid}/historico`), { 
-                        placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(), 
-                        entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), 
-                        saida: new Date(agora).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
-                        timestampSaida: agora, esgotouTempo: esgotou 
+                    await push(ref(db, `usuarios/${currentUser.uid}/historico`), {
+                        placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(),
+                        timestampSaida: Date.now(), esgotouTempo: tempo >= v.tempoTotalMs
                     });
-                    await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot }); 
+                    await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot });
                     await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
                 }
             }, {onlyOnce: true});
@@ -311,97 +224,64 @@
         function monitorarUsuario(uid) {
             onValue(ref(db, `usuarios/${uid}`), (snap) => {
                 const d = snap.val(); saldoLocal = d?.saldo || 0;
-                document.getElementById('saldo-display').innerText = `R$ ${saldoLocal.toFixed(2).replace('.',',')}`;
+                document.getElementById('saldo-display').innerText = `R$ ${saldoLocal.toFixed(2)}`;
                 if (d?.vagaAtiva) {
-                    document.getElementById('form-estacionar').classList.add('hidden'); document.getElementById('vaga-ativa-box').classList.remove('hidden');
-                    document.getElementById('placa-ativa-label').innerText = d.vagaAtiva.placa; iniciarCronometro(d.vagaAtiva);
-                } else {
-                    document.getElementById('vaga-ativa-box').classList.add('hidden'); document.getElementById('form-estacionar').classList.remove('hidden');
-                    window.pararAlertaSonoro();
+                    document.getElementById('form-estacionar').classList.add('hidden');
+                    document.getElementById('vaga-ativa-box').classList.remove('hidden');
+                    document.getElementById('placa-ativa-label').innerText = d.vagaAtiva.placa;
                     clearInterval(timerCron);
-                }
-            });
-        }
-
-        function iniciarCronometro(v) {
-            clearInterval(timerCron);
-            timerCron = setInterval(() => {
-                const res = v.final - Date.now();
-                document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil((Date.now()-v.inicio)/60000)*(v.valorHora/60)).toFixed(2).replace('.',',')}`;
-                if (res <= 900000 && res > 0 && !aviso15Feito) { 
-                    aviso15Feito = true;
-                    document.getElementById('alerta-mensagem').innerText = "Faltam 15 minutos para seu tempo esgotar!";
-                    document.getElementById('alerta-visual-container').classList.remove('hidden');
-                    somAlerta.play().catch(()=>{});
-                }
-                if (res <= 0) { 
-                    document.getElementById('cronometro').innerText = "FIM"; 
-                    document.getElementById('alerta-mensagem').innerText = "SEU TEMPO ACABOU! SAIA DA VAGA IMEDIATAMENTE.";
-                    document.getElementById('alerta-visual-container').classList.remove('hidden');
-                    somAlerta.loop = true;
-                    somAlerta.play().catch(()=>{});
-                    return; 
-                }
-                const m = Math.floor((res%3600000)/60000), s = Math.floor((res%60000)/1000);
-                document.getElementById('cronometro').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            }, 1000);
-        }
-
-        window.salvarNovoVeiculo = async () => {
-            const p = document.getElementById('input-placa').value.toUpperCase().trim();
-            const m = document.getElementById('input-modelo').value.toUpperCase().trim();
-            if (p.length < 7 || !m) return alert("Erro nos dados.");
-            await push(ref(db, `usuarios/${currentUser.uid}/veiculos`), { placa: p, modelo: m });
-            document.getElementById('input-placa').value = ""; document.getElementById('input-modelo').value = "";
-        };
-
-        function carregarVeiculos(uid) {
-            onValue(ref(db, `usuarios/${uid}/veiculos`), (snap) => {
-                const list = document.getElementById('lista-veiculos'); list.innerHTML = "";
-                const data = snap.val(); if (data) Object.entries(data).forEach(([id, v]) => {
-                    list.innerHTML += `<div class="card-app flex justify-between items-center mb-2"><div><p class="font-black text-xl">${v.placa}</p><p class="text-xs text-gray-400 font-bold">${v.modelo}</p></div><button onclick="window.selecionarPlaca('${v.placa}')" class="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold uppercase">Usar</button></div>`;
-                });
-            });
-        }
-        window.selecionarPlaca = (p) => { document.getElementById('placa-view').innerText = p; window.mudarAba('aba-estacionar'); };
-
-        window.selVal = (v, b) => {
-            valSel = v; document.querySelectorAll('.btn-value').forEach(btn => btn.classList.remove('active'));
-            b.classList.add('active'); document.getElementById('btn-gerar').disabled = false; document.getElementById('btn-gerar').classList.remove('opacity-50');
-        };
-
-        window.gerarPixReal = async () => {
-            const b = document.getElementById('btn-gerar'); b.innerText = "PROCESSANDO...";
-            try {
-                const res = await fetch(`${API_URL}/gerar-pix`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ valor: valSel, email: currentUser.email, userId: currentUser.uid }) });
-                const d = await res.json();
-                document.getElementById('qrcode-img').src = `data:image/png;base64,${d.qr_code_base64}`;
-                document.getElementById('pix-code').value = d.qr_code;
-                document.getElementById('pix-area').classList.remove('hidden');
-                b.innerText = "PIX GERADO";
-            } catch (e) { alert("Erro PIX"); b.innerText = "Gerar PIX"; }
-        };
-
-        window.copiarPix = () => { document.getElementById('pix-code').select(); document.execCommand('copy'); alert("Copiado!"); };
-
-        function carregarHistorico(uid) {
-            onValue(ref(db, `usuarios/${uid}/historico`), (snap) => {
-                const list = document.getElementById('lista-historico'); list.innerHTML = "";
-                const data = snap.val(); if (data) {
-                    Object.values(data).reverse().forEach(h => {
-                        list.innerHTML += `<div class="card-app border-l-4 border-green-600 mb-2"><div class="flex justify-between text-[10px] text-gray-400 font-bold"><span>${h.data}</span><span class="text-green-700">R$ ${parseFloat(h.valor).toFixed(2).replace('.',',')}</span></div><div class="text-lg font-black">${h.placa}</div><div class="text-[9px] font-bold text-gray-500 uppercase truncate">${h.rua}</div><button onclick="window.abrirRecibo('${h.placa}', '${h.rua}', '${h.data}', '${h.entrada}', '${h.saida}', '${h.valor}')" class="w-full mt-2 bg-gray-100 text-[10px] font-black py-2 rounded-lg uppercase">Abrir Recibo</button></div>`;
-                    });
+                    timerCron = setInterval(() => {
+                        const res = d.vagaAtiva.final - Date.now();
+                        const decorrido = Date.now() - d.vagaAtiva.inicio;
+                        document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil(decorrido/60000)*(d.vagaAtiva.valorHora/60)).toFixed(2)}`;
+                        
+                        if (res <= 900000 && res > 0 && !aviso15Feito) {
+                            aviso15Feito = true;
+                            document.getElementById('alerta-mensagem').innerText = "Faltam 15 Minutos!";
+                            document.getElementById('alerta-visual-container').classList.remove('hidden');
+                            somAlerta.play().catch(()=>{});
+                        }
+                        if (res <= 0) {
+                            document.getElementById('cronometro').innerText = "FIM";
+                            document.getElementById('alerta-mensagem').innerText = "SAIA DA VAGA AGORA!";
+                            document.getElementById('alerta-visual-container').classList.remove('hidden');
+                            somAlerta.loop = true; somAlerta.play().catch(()=>{});
+                        } else {
+                            const m = Math.floor(res/60000), s = Math.floor((res%60000)/1000);
+                            document.getElementById('cronometro').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+                        }
+                    }, 1000);
+                } else {
+                    document.getElementById('vaga-ativa-box').classList.add('hidden');
+                    document.getElementById('form-estacionar').classList.remove('hidden');
+                    window.pararAlertaSonoro(); clearInterval(timerCron);
                 }
             });
         }
 
         window.mudarAba = (id, b) => {
             document.querySelectorAll('.aba-content').forEach(a => a.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            document.getElementById(id).classList.add('active'); 
-            if(b) b.classList.add('active'); else if(id === 'aba-estacionar') document.getElementById('btn-nav-estacionar').classList.add('active');
-            window.iniciarGps();
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if(b) b.classList.add('active');
         };
+
+        window.salvarNovoVeiculo = async () => {
+            const p = document.getElementById('input-placa').value.toUpperCase();
+            if(p.length < 7) return;
+            await push(ref(db, `usuarios/${currentUser.uid}/veiculos`), { placa: p });
+            document.getElementById('input-placa').value = "";
+        };
+
+        function carregarVeiculos(uid) {
+            onValue(ref(db, `usuarios/${uid}/veiculos`), (snap) => {
+                const list = document.getElementById('lista-veiculos'); list.innerHTML = "";
+                if(snap.val()) Object.values(snap.val()).forEach(v => {
+                    list.innerHTML += `<div class="card-app flex justify-between mb-2"><b>${v.placa}</b><button onclick="window.selecionarPlaca('${v.placa}')" class="text-blue-600 font-bold">USAR</button></div>`;
+                });
+            });
+        }
+        window.selecionarPlaca = (p) => { document.getElementById('placa-view').innerText = p; window.mudarAba('aba-estacionar'); };
     </script>
 </body>
 </html>
