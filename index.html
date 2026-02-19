@@ -21,7 +21,6 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .card-app { background: white; border-radius: 1.25rem; padding: 1.25rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         
-        /* GPS PISCANDO VERDE */
         .loading-pulse { 
             animation: pulse 1.5s infinite; 
             color: #15711b; 
@@ -191,12 +190,10 @@
             }, null, { enableHighAccuracy: true });
         };
 
-        // LIBERAÇÃO IMEDIATA
         window.checarLiberacaoBotao = () => {
             const btn = document.getElementById('btn-estacionar-main');
             const placa = document.getElementById('placa-view').innerText;
             const zonaVal = document.getElementById('zona-select').value;
-            
             if(placa !== "SELECIONE" && zonaVal !== "" && zonaVal !== "Aguardando...") {
                 btn.classList.remove('opacity-50', 'pointer-events-none');
             } else {
@@ -215,12 +212,11 @@
                 document.getElementById('txt-local').classList.remove('loading-pulse');
                 document.getElementById('txt-local').style.color = "#15711b"; 
                 selZ.innerHTML = `<option value="${zona.preco}">${zona.setor} - R$ ${zona.preco.toFixed(2)}/h</option>`;
-                
                 let maxH = zona.horasMaximas || 1;
                 let htmlT = `<option value="1">1 Hora</option>`;
                 if (maxH >= 2) htmlT += `<option value="2">2 Horas</option>`;
                 selT.innerHTML = htmlT;
-                window.checarLiberacaoBotao(); // Tenta liberar na hora
+                window.checarLiberacaoBotao();
             } else {
                 document.getElementById('txt-local').innerHTML = `📍 ${rua.toUpperCase()} <br><span class="text-red-500 text-[10px]">FORA DA ÁREA</span>`;
                 document.getElementById('txt-local').classList.remove('loading-pulse');
@@ -255,22 +251,28 @@
         };
 
         window.sairDaVaga = async () => {
-            onValue(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), async (snap) => {
-                const v = snap.val(); if (!v) return;
-                const agora = Date.now(); const tempo = agora - v.inicio;
-                const tot = Math.max(1, Math.ceil(tempo / 60000)) * (v.valorHora / 60);
-                if (confirm(`Encerrar? R$ ${tot.toFixed(2)}`)) {
-                    window.pararAlertaSonoro();
-                    await push(ref(db, `usuarios/${currentUser.uid}/historico`), {
-                        placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(),
-                        entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
-                        saida: new Date(agora).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
-                        timestampSaida: agora, esgotouTempo: tempo >= v.tempoTotalMs
-                    });
-                    await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot });
-                    await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
-                }
-            }, {onlyOnce: true});
+            const snap = await get(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
+            const v = snap.val(); if (!v) return;
+            const agora = Date.now(); const tempo = agora - v.inicio;
+            const tot = Math.max(1, Math.ceil(tempo / 60000)) * (v.valorHora / 60);
+            if (confirm(`Encerrar? R$ ${tot.toFixed(2)}`)) {
+                window.finalizarVaga(v, agora, tot, false);
+            }
+        };
+
+        // Função isolada para finalizar a vaga (usada pelo botão e pelo automático)
+        window.finalizarVaga = async (v, agora, tot, foiAutomatico) => {
+            window.pararAlertaSonoro();
+            clearInterval(timerCron);
+            await push(ref(db, `usuarios/${currentUser.uid}/historico`), {
+                placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(),
+                entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+                saida: new Date(agora).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+                timestampSaida: agora, esgotouTempo: true 
+            });
+            await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot });
+            await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
+            if(foiAutomatico) alert("TEMPO ESGOTADO! A vaga foi encerrada automaticamente.");
         };
 
         function monitorarUsuario(uid) {
@@ -283,18 +285,20 @@
                     document.getElementById('placa-ativa-label').innerText = d.vagaAtiva.placa;
                     clearInterval(timerCron);
                     timerCron = setInterval(() => {
-                        const res = d.vagaAtiva.final - Date.now();
-                        document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil((Date.now()-d.vagaAtiva.inicio)/60000)*(d.vagaAtiva.valorHora/60)).toFixed(2).replace('.',',')}`;
+                        const agora = Date.now();
+                        const res = d.vagaAtiva.final - agora;
+                        document.getElementById('valor-correndo').innerText = `R$ ${(Math.ceil((agora-d.vagaAtiva.inicio)/60000)*(d.vagaAtiva.valorHora/60)).toFixed(2).replace('.',',')}`;
+                        
                         if (res <= 900000 && res > 0 && !aviso15Feito) {
                             aviso15Feito = true; somAlerta.play();
                             document.getElementById('alerta-visual-container').classList.remove('hidden');
                             document.getElementById('alerta-mensagem').innerText = "Faltam 15 minutos!";
                         }
+                        
+                        // ENCERRAMENTO AUTOMÁTICO
                         if (res <= 0) {
-                            document.getElementById('cronometro').innerText = "FIM";
-                            document.getElementById('alerta-visual-container').classList.remove('hidden');
-                            document.getElementById('alerta-mensagem').innerText = "TEMPO ESGOTADO!";
-                            somAlerta.loop = true; somAlerta.play();
+                            const totFinal = (d.vagaAtiva.tempoTotalMs / 60000) * (d.vagaAtiva.valorHora / 60);
+                            window.finalizarVaga(d.vagaAtiva, d.vagaAtiva.final, totFinal, true);
                         } else {
                             const m = Math.floor(res/60000), s = Math.floor((res%60000)/1000);
                             document.getElementById('cronometro').innerText = `${m}:${s.toString().padStart(2,'0')}`;
@@ -348,7 +352,7 @@
         window.selecionarPlaca = (p) => { 
             document.getElementById('placa-view').innerText = p; 
             window.mudarAba('aba-estacionar');
-            window.checarLiberacaoBotao(); // Libera assim que seleciona o carro
+            window.checarLiberacaoBotao();
         };
 
         function carregarHistorico(uid) {
