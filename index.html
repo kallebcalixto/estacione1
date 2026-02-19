@@ -184,8 +184,10 @@
                     headers: { 'Accept-Language': 'pt-BR' }
                 })
                 .then(r => r.json()).then(data => {
-                    ruaDetectadaOficial = data.address.road || data.address.pedestrian || data.address.suburb || "Rua Desconhecida";
-                    processarLogicaRua(ruaDetectadaOficial);
+                    const rua = data.address.road || data.address.pedestrian || data.address.suburb || "Rua Desconhecida";
+                    const numero = data.address.house_number ? `, ${data.address.house_number}` : "";
+                    ruaDetectadaOficial = rua;
+                    processarLogicaRua(rua, numero);
                 });
             }, null, { enableHighAccuracy: true });
         };
@@ -201,14 +203,14 @@
             }
         };
 
-        function processarLogicaRua(rua) {
+        function processarLogicaRua(rua, numero) {
             const selZ = document.getElementById('zona-select');
             const selT = document.getElementById('tempo-select');
             const limpar = (t) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\b(rua|avenida|av|travessa|pç|praça|al)\b/g, "").replace(/\s+/g, "").trim();
             const zona = zonasAdmin.find(z => limpar(rua).includes(limpar(z.rua)) || limpar(z.rua).includes(limpar(rua)));
 
             if (zona) {
-                document.getElementById('txt-local').innerHTML = `📍 ${rua.toUpperCase()}`;
+                document.getElementById('txt-local').innerHTML = `📍 ${rua.toUpperCase()}${numero}`;
                 document.getElementById('txt-local').classList.remove('loading-pulse');
                 document.getElementById('txt-local').style.color = "#15711b"; 
                 selZ.innerHTML = `<option value="${zona.preco}">${zona.setor} - R$ ${zona.preco.toFixed(2)}/h</option>`;
@@ -218,7 +220,7 @@
                 selT.innerHTML = htmlT;
                 window.checarLiberacaoBotao();
             } else {
-                document.getElementById('txt-local').innerHTML = `📍 ${rua.toUpperCase()} <br><span class="text-red-500 text-[10px]">FORA DA ÁREA</span>`;
+                document.getElementById('txt-local').innerHTML = `📍 ${rua.toUpperCase()}${numero} <br><span class="text-red-500 text-[10px]">FORA DA ÁREA</span>`;
                 document.getElementById('txt-local').classList.remove('loading-pulse');
                 window.checarLiberacaoBotao();
             }
@@ -260,7 +262,6 @@
             }
         };
 
-        // Função isolada para finalizar a vaga (usada pelo botão e pelo automático)
         window.finalizarVaga = async (v, agora, tot, foiAutomatico) => {
             window.pararAlertaSonoro();
             clearInterval(timerCron);
@@ -295,7 +296,6 @@
                             document.getElementById('alerta-mensagem').innerText = "Faltam 15 minutos!";
                         }
                         
-                        // ENCERRAMENTO AUTOMÁTICO
                         if (res <= 0) {
                             const totFinal = (d.vagaAtiva.tempoTotalMs / 60000) * (d.vagaAtiva.valorHora / 60);
                             window.finalizarVaga(d.vagaAtiva, d.vagaAtiva.final, totFinal, true);
