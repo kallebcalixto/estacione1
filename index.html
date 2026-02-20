@@ -261,12 +261,17 @@
             const vH = parseFloat(document.getElementById('zona-select').value);
             const horas = parseInt(document.getElementById('tempo-select').value);
             if (saldoLocal < (vH * horas)) return alert("Saldo insuficiente!");
+            
             const histSnap = await get(ref(db, `usuarios/${currentUser.uid}/historico`));
             const hist = histSnap.val();
             if (hist) {
                 const ultima = Object.values(hist).reverse().find(h => h.rua === ruaDetectadaOficial);
-                if (ultima?.esgotouTempo && (Date.now() - ultima.timestampSaida < 900000)) return alert("AGUARDE 15 MIN PARA ESTE SETOR.");
+                // REGRA: Bloqueio de 15 min apenas se o tempo foi esgotado completamente (limite excedido)
+                if (ultima?.esgotouTempo && ultima?.foiAutomatico && (Date.now() - ultima.timestampSaida < 900000)) {
+                    return alert("LIMITE EXCEDIDO. AGUARDE 15 MIN PARA ESTE SETOR.");
+                }
             }
+            
             aviso15Feito = false;
             await update(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`), {
                 placa: document.getElementById('placa-view').innerText, rua: ruaDetectadaOficial,
@@ -292,7 +297,9 @@
                 placa: v.placa, rua: v.rua, valor: tot, data: new Date().toLocaleDateString(),
                 entrada: new Date(v.inicio).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
                 saida: new Date(agora).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
-                timestampSaida: agora, esgotouTempo: true 
+                timestampSaida: agora, 
+                esgotouTempo: true,
+                foiAutomatico: foiAutomatico // Identifica se encerrou por limite de tempo
             });
             await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot });
             await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
