@@ -95,8 +95,12 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <select id="zona-select" onchange="window.checarLiberacaoBotao()" class="w-full p-4 border rounded-2xl font-bold text-xs bg-white border-gray-200 outline-none"><option value="">Aguardando...</option></select>
-                    <select id="tempo-select" class="w-full p-4 border rounded-2xl font-bold text-xs bg-white border-gray-200 outline-none"><option value="">Tempo...</option></select>
+                    <select id="zona-select" class="w-full p-4 border rounded-2xl font-bold text-xs bg-white border-gray-200 outline-none">
+                        <option value="">Aguardando...</option>
+                    </select>
+                    <select id="tempo-select" class="w-full p-4 border rounded-2xl font-bold text-xs bg-white border-gray-200 outline-none">
+                        <option value="">Tempo...</option>
+                    </select>
                 </div>
                 <button id="btn-estacionar-main" onclick="window.ativarVaga()" class="w-full btn-zazul py-5 text-lg opacity-50 pointer-events-none shadow-xl uppercase">Estacionar</button>
             </div>
@@ -196,7 +200,7 @@
             const btn = document.getElementById('btn-estacionar-main');
             const placa = document.getElementById('placa-view').innerText;
             const zonaVal = document.getElementById('zona-select').value;
-            if(placa !== "SELECIONE" && zonaVal !== "" && zonaVal !== "Aguardando...") {
+            if(placa !== "SELECIONE" && zonaVal !== "" && zonaVal !== "Aguardando..." && zonaVal !== "Selecione o Setor...") {
                 btn.classList.remove('opacity-50', 'pointer-events-none');
             } else {
                 btn.classList.add('opacity-50', 'pointer-events-none');
@@ -207,21 +211,37 @@
             const selZ = document.getElementById('zona-select');
             const selT = document.getElementById('tempo-select');
             const limpar = (t) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\b(rua|avenida|av|travessa|pç|praça|al)\b/g, "").replace(/\s+/g, "").trim();
-            const zona = zonasAdmin.find(z => limpar(rua).includes(limpar(z.rua)) || limpar(z.rua).includes(limpar(rua)));
+            
+            const ruaLimpa = limpar(rua);
+            const zonasEncontradas = zonasAdmin.filter(z => {
+                const zRuaLimpa = limpar(z.rua);
+                return ruaLimpa.includes(zRuaLimpa) || zRuaLimpa.includes(ruaLimpa);
+            });
 
-            if (zona) {
+            if (zonasEncontradas.length > 0) {
                 document.getElementById('txt-local').innerHTML = `📍 ${rua.toUpperCase()}${numero}`;
                 document.getElementById('txt-local').classList.remove('loading-pulse');
                 document.getElementById('txt-local').style.color = "#15711b"; 
-                selZ.innerHTML = `<option value="${zona.preco}">${zona.setor} - R$ ${zona.preco.toFixed(2)}/h</option>`;
-                let maxH = zona.horasMaximas || 1;
-                let htmlT = `<option value="1">1 Hora</option>`;
-                if (maxH >= 2) htmlT += `<option value="2">2 Horas</option>`;
-                selT.innerHTML = htmlT;
-                window.checarLiberacaoBotao();
+
+                let htmlZonas = `<option value="">Selecione o Setor...</option>`;
+                zonasEncontradas.forEach(z => {
+                    htmlZonas += `<option value="${z.preco}" data-max="${z.horasMaximas}">${z.setor} - R$ ${z.preco.toFixed(2)}/h</option>`;
+                });
+                selZ.innerHTML = htmlZonas;
+
+                selZ.onchange = () => {
+                    const selectedOption = selZ.options[selZ.selectedIndex];
+                    const maxH = selectedOption.getAttribute('data-max') || 1;
+                    let htmlT = `<option value="1">1 Hora</option>`;
+                    if (maxH >= 2) htmlT += `<option value="2">2 Horas</option>`;
+                    selT.innerHTML = htmlT;
+                    window.checarLiberacaoBotao();
+                };
             } else {
                 document.getElementById('txt-local').innerHTML = `📍 ${rua.toUpperCase()}${numero} <br><span class="text-red-500 text-[10px]">FORA DA ÁREA</span>`;
                 document.getElementById('txt-local').classList.remove('loading-pulse');
+                selZ.innerHTML = `<option value="">Rua não coberta</option>`;
+                selT.innerHTML = `<option value="">---</option>`;
                 window.checarLiberacaoBotao();
             }
         }
@@ -229,7 +249,10 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user; document.getElementById('tela-login').classList.add('hidden');
-                onValue(ref(db, 'configuracoes_zonas'), (snap) => { zonasAdmin = snap.val() ? Object.values(snap.val()) : []; window.iniciarGps(); });
+                onValue(ref(db, 'configuracoes_zonas'), (snap) => { 
+                    zonasAdmin = snap.val() ? Object.values(snap.val()) : []; 
+                    window.iniciarGps(); 
+                });
                 monitorarUsuario(user.uid); carregarVeiculos(user.uid); carregarHistorico(user.uid);
             } else { document.getElementById('tela-login').classList.remove('hidden'); }
         });
