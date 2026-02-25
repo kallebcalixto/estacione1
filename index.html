@@ -60,13 +60,17 @@
     </div>
 
     <div id="tela-login" class="fixed inset-0 z-[100] bg-white flex flex-col p-6 items-center justify-center">
-        <div id="login-container" class="w-full max-w-md space-y-6 text-center">
+        <div id="login-container" class="w-full max-w-md space-y-4 text-center">
             <div class="zazul-green w-20 h-20 rounded-3xl mx-auto flex items-center justify-center shadow-lg"><span class="text-white text-4xl font-black">E</span></div>
             <h2 class="text-2xl font-black zazul-text-green uppercase">Acesso</h2>
             <input type="email" id="login-email" placeholder="Seu e-mail" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
             <input type="password" id="login-senha" placeholder="Sua senha" class="w-full p-4 border rounded-2xl font-bold bg-gray-50 outline-none">
+            
             <button onclick="window.fazerLogin()" class="w-full btn-zazul py-4 text-lg">Entrar</button>
-            <button onclick="window.esqueciSenha()" class="text-xs font-bold text-gray-500 uppercase mt-4 block mx-auto underline">Esqueci minha senha</button>
+            
+            <button onclick="window.fazerCadastro()" class="w-full border-2 border-green-700 zazul-text-green py-4 rounded-2xl font-black uppercase text-sm">Fazer Cadastro</button>
+            
+            <button onclick="window.esqueciSenha()" class="text-xs font-bold text-gray-500 uppercase mt-2 block mx-auto underline">Esqueci minha senha</button>
         </div>
     </div>
 
@@ -164,8 +168,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getDatabase, ref, onValue, update, remove, push, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, onValue, update, remove, push, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = { apiKey: "AIzaSyDS2D6-KCvsJomst0m2qs3J93UEq3kWw1Q", authDomain: "estacione-6cfbf.firebaseapp.com", databaseURL: "https://estacione-6cfbf-default-rtdb.firebaseio.com", projectId: "estacione-6cfbf", appId: "1:490946040222:web:0071714b8e6d645459468f" };
         const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getDatabase(app);
@@ -178,6 +182,21 @@
         window.pararAlertaSonoro = () => { somAlerta.pause(); somAlerta.loop = false; document.getElementById('alerta-visual-container').classList.add('hidden'); };
         
         window.fazerLogin = () => { signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-senha').value).catch(() => alert("Acesso Negado")); };
+        
+        // FUNÇÃO DE CADASTRO INTEGRADA
+        window.fazerCadastro = () => {
+            const email = document.getElementById('login-email').value;
+            const senha = document.getElementById('login-senha').value;
+            if(!email || !senha) return alert("Digite e-mail e senha para cadastrar");
+            
+            createUserWithEmailAndPassword(auth, email, senha)
+                .then((userCredential) => {
+                    set(ref(db, `usuarios/${userCredential.user.uid}`), { saldo: 0 });
+                    alert("Conta criada! Bem-vindo.");
+                })
+                .catch((error) => alert("Erro: " + error.message));
+        };
+
         window.fazerLogout = () => { if(confirm("Deseja Sair?")) signOut(auth).then(() => location.reload()); };
         window.esqueciSenha = () => { const e = document.getElementById('login-email').value; if(!e) return alert("Digite o e-mail"); sendPasswordResetEmail(auth, e).then(() => alert("Verifique seu e-mail")); };
 
@@ -266,7 +285,6 @@
             const hist = histSnap.val();
             if (hist) {
                 const ultima = Object.values(hist).reverse().find(h => h.rua === ruaDetectadaOficial);
-                // REGRA: Bloqueio de 15 min apenas se o tempo foi esgotado completamente (limite excedido)
                 if (ultima?.esgotouTempo && ultima?.foiAutomatico && (Date.now() - ultima.timestampSaida < 900000)) {
                     return alert("LIMITE EXCEDIDO. AGUARDE 15 MIN PARA ESTE SETOR.");
                 }
@@ -299,7 +317,7 @@
                 saida: new Date(agora).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
                 timestampSaida: agora, 
                 esgotouTempo: true,
-                foiAutomatico: foiAutomatico // Identifica se encerrou por limite de tempo
+                foiAutomatico: foiAutomatico 
             });
             await update(ref(db, `usuarios/${currentUser.uid}`), { saldo: saldoLocal - tot });
             await remove(ref(db, `usuarios/${currentUser.uid}/vagaAtiva`));
